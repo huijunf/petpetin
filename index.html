@@ -1,0 +1,1487 @@
+
+<!doctype html>
+<html class="no-js" lang="zh-TW">
+<head>
+
+
+
+
+
+    
+    
+<style>
+    .ecom-cart-popup {
+        display: grid;
+        position: fixed;
+        inset: 0;
+        z-index: 9999999;
+        align-content: center;
+        padding: 5px;
+        justify-content: center;
+        align-items: center;
+        justify-items: center;
+    }
+
+    .ecom-cart-popup::before {content: ' ';position: absolute;background: #e5e5e5b3;inset: 0;}
+    .ecom-ajax-loading{
+        cursor:not-allowed;
+    pointer-events: none;
+    opacity: 0.6;
+    }
+
+
+    #ecom-toast {
+    visibility: hidden;
+    max-width: 50px;
+    min-height: 50px;
+    margin: auto;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 2px;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    bottom: 30px;
+    font-size: 17px;
+    display: grid;
+    grid-template-columns: 50px auto;
+    align-items: center;
+    justify-content: start;
+    align-content: center;
+    justify-items: start;
+    }
+    #ecom-toast.ecom-toast-show {
+    visibility: visible;
+    -webkit-animation: ecomFadein 0.5s, ecomExpand 0.5s 0.5s, ecomStay 3s 1s, ecomShrink 0.5s 2s, ecomFadeout 0.5s 2.5s;
+    animation: ecomFadein 0.5s, ecomExpand 0.5s 0.5s, ecomStay 3s 1s, ecomShrink 0.5s 4s, ecomFadeout 0.5s 4.5s;
+    }
+    #ecom-toast #ecom-toast-icon {
+    width: 50px;
+    height: 100%;
+    /* float: left; */
+    /* padding-top: 16px; */
+    /* padding-bottom: 16px; */
+    box-sizing: border-box;
+    background-color: #111;
+    color: #fff;
+    padding: 5px;
+    }
+    #ecom-toast .ecom-toast-icon-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    position: relative;
+    vertical-align: middle;
+    margin: auto;
+    text-align: center;
+    /* padding: 5px; */
+    }
+    #ecom-toast #ecom-toast-desc {
+    color: #fff;
+    padding: 16px;
+    overflow: hidden;
+    white-space: nowrap;
+    }
+
+    @-webkit-keyframes ecomFadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+    }
+    @keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+    }
+    @-webkit-keyframes ecomExpand {
+    from {
+        min-width: 50px;
+    }
+    to {
+        min-width: var(--ecom-max-width);
+    }
+    }
+    @keyframes ecomExpand {
+    from {
+        min-width: 50px;
+    }
+    to {
+        min-width: var(--ecom-max-width);
+    }
+    }
+    @-webkit-keyframes ecomStay {
+    from {
+        min-width: var(--ecom-max-width);
+    }
+    to {
+        min-width: var(--ecom-max-width);
+    }
+    }
+    @keyframes ecomStay {
+    from {
+        min-width: var(--ecom-max-width);
+    }
+    to {
+        min-width: var(--ecom-max-width);
+    }
+    }
+    @-webkit-keyframes ecomShrink {
+    from {
+        min-width: var(--ecom-max-width);
+    }
+    to {
+        min-width: 50px;
+    }
+    }
+    @keyframes ecomShrink {
+    from {
+        min-width: var(--ecom-max-width);
+    }
+    to {
+        min-width: 50px;
+    }
+    }
+    @-webkit-keyframes ecomFadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+    to {
+        bottom: 60px;
+        opacity: 0;
+    }
+    }
+    @keyframes ecomFadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+    to {
+        bottom: 60px;
+        opacity: 0;
+    }
+    }
+    </style>
+
+    <script type="text/javascript" id="ecom-theme-helpers" async="async">
+        window.EComposer = window.EComposer || {};
+        (function(){this.configs = {
+                ajax_cart: {
+                    enable: false
+                },
+                quickview: {
+                    enable: false
+                }
+
+                };
+        
+            this.customer = false;
+        
+            this.routes = {
+                domain: 'https://petsthing.com.hk',
+                root_url: '/',
+                collections_url: '/collections',
+                all_products_collection_url: '/collections/all',
+                cart_url:'/cart',
+                cart_add_url:'/cart/add',
+                cart_change_url:'/cart/change',
+                cart_clear_url: '/cart/clear',
+                cart_update_url: '/cart/update',
+                product_recommendations_url: '/recommendations/products'
+            };
+            this.queryParams = {};
+            if (window.location.search.length) {
+                new URLSearchParams(window.location.search).forEach((value,key)=>{
+                    this.queryParams[key] = value;
+                })
+            }
+            this.money_format = "${{amount}}",
+            this.money_with_currency_format = "HK${{amount}}",
+            this.formatMoney = function(t, e) {
+                function n(t, e) {
+                    return void 0 === t ? e : t
+                }
+                function o(t, e, o, i) {
+                    if (e = n(e, 2),
+                    o = n(o, ","),
+                    i = n(i, "."),
+                    isNaN(t) || null == t)
+                        return 0;
+                    var r = (t = (t / 100).toFixed(e)).split(".");
+                    return r[0].replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1" + o) + (r[1] ? i + r[1] : "")
+                }
+                "string" == typeof t && (t = t.replace(".", ""));
+                var i = ""
+                , r = /\{\{\s*(\w+)\s*\}\}/
+                , a = e || this.money_format;
+                switch (a.match(r)[1]) {
+                case "amount":
+                    i = o(t, 2);
+                    break;
+                case "amount_no_decimals":
+                    i = o(t, 0);
+                    break;
+                case "amount_with_comma_separator":
+                    i = o(t, 2, ".", ",");
+                    break;
+                case "amount_with_space_separator":
+                    i = o(t, 2, " ", ",");
+                    break;
+                case "amount_with_period_and_space_separator":
+                    i = o(t, 2, " ", ".");
+                    break;
+                case "amount_no_decimals_with_comma_separator":
+                    i = o(t, 0, ".", ",");
+                    break;
+                case "amount_no_decimals_with_space_separator":
+                    i = o(t, 0, " ");
+                    break;
+                case "amount_with_apostrophe_separator":
+                    i = o(t, 2, "'", ".")
+                }
+                return a.replace(r, i)
+            }
+            this.resizeImage = function(t, r) {
+                try {
+                    if (t.indexOf('cdn.shopify.com') === -1)
+                        return t;
+                    if (!r || "original" == r ||  "full" == r || "master" == r)
+                        return t;
+                    var o = t.match(/\.(jpg|jpeg|gif|png|bmp|bitmap|tiff|tif)((\#[0-9a-z\-]+)?(\?v=.*)?)?$/igm);
+                    if (null == o)
+                        return null;
+                    var i = t.split(o[0])
+                    , x = o[0];
+                    return i[0] + "_" + r + x;
+                } catch (o) {
+                    return t
+                }
+            },
+            this.getProduct = function(handle){
+            if(!handle)
+            {
+                return false;
+            }
+            let endpoint = this.routes.root_url + '/products/' + handle + '.js'
+            if(window.ECOM_LIVE)
+            {
+                endpoint = '/shop/builder/ajax/ecom-proxy/products/' + handle;
+            }
+            return  window.fetch(endpoint,{
+                headers: {
+                'Content-Type' : 'application/json'
+                }
+            })
+            .then(res=> res.json());
+
+            }
+        }).bind(window.EComposer)();
+    </script>
+
+
+<script src="https://cdn.ecomposer.app/vendors/js/jquery.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Added by AVADA SEO Suite -->
+	
+
+
+	<!-- /Added by AVADA SEO Suite -->
+   <script>
+(function(h,e,a,t,m,p) {
+m=e.createElement(a);m.async=!0;m.src=t;
+p=e.getElementsByTagName(a)[0];p.parentNode.insertBefore(m,p);
+})(window,document,'script','https://u.heatmap.it/log.js');
+</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+  <meta name="theme-color" content="#daad6c">
+  <meta name="format-detection" content="telephone=no">
+     <meta name="naver-site-verification" content="f022c5c14f87e96b6c232d3b03e553b9e5c90ce7" />
+  <meta name="yandex-verification" content="b4157aaf381bd401" />
+  <meta name="baidu-site-verification" content="code-EoNc31BFRY" />
+  <meta name="facebook-domain-verification" content="rmdfkjr5ip5z0xdktyjfj4j4pxhniq" />
+<meta name="google-site-verification" content="mn7hXBiHsZ8XlMa0_1IkodOh8UZgW6qGDKRdinbWcF0" />
+  <link rel="canonical" href="https://petsthing.com.hk/">
+  <link rel="prefetch" as="document" href="https://petsthing.com.hk">
+  <link rel="dns-prefetch" href="https://cdn.shopify.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+  <link rel="preconnect" href="https://monorail-edge.shopifysvc.com"><link rel="dns-prefetch" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" as="style" href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/pre_theme.min.css?v=106275834470635101061669106240">
+  <link rel="preload" as="style" href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/theme.css?enable_css_minification=1&v=133924317511935305731669103800"><title>毛孩物語首頁 &ndash; 毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹</title>
+    <meta name="keywords" content="寵物手推車, 貓爬架, 貓樹, 寵物飛機籠, 網上寵物用品店香港, 香港貓狗大件用品, 寵物車, 狗狗樓梯"><meta name="description" content="香港毛孩物語寵物用品專門店，提供寵物必備貓狗生活用品同寵物玩具， 當中包括IATA寵物狗籠、飛機籠、寵物手推車、貓爬架、貓樹、寵物服裝配件等大量寵物傢俬，快啲嚟幫主子入貨啦！"><link rel="shortcut icon" type="image/png" href="//cdn.shopify.com/s/files/1/0550/5853/0481/files/PetsThing-logo-1000x1000_45d6a293-e0d3-4f86-a4a7-70c20371371c_32x.png?v=1639331690"><link rel="apple-touch-icon-precomposed" type="image/png" sizes="152x152" href="//cdn.shopify.com/s/files/1/0550/5853/0481/files/PetsThing-logo-1000x1000_44f23b1e-ee39-4afd-a424-7e24633c5d08_152x.png?v=1639331707"><!-- social-meta-tags.liquid --><meta name="keywords" content="寵物手推車, 貓爬架, 貓樹, 寵物飛機籠, 網上寵物用品店香港, 香港貓狗大件用品, 寵物車, pet stroller, pet crate, cat climber, cat tree, hk pet suppliers and furniture"/><meta name="author" content="Beyond01"><meta property="og:site_name" content="毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹">
+<meta property="og:url" content="https://petsthing.com.hk/">
+<meta property="og:title" content="毛孩物語首頁 &ndash; 毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹">
+<meta property="og:type" content="website">
+<meta property="og:description" content="香港毛孩物語寵物用品專門店，提供寵物必備貓狗生活用品同寵物玩具， 當中包括IATA寵物狗籠、飛機籠、寵物手推車、貓爬架、貓樹、寵物服裝配件等大量寵物傢俬，快啲嚟幫主子入貨啦！"><meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="毛孩物語首頁 &ndash; 毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹">
+<meta name="twitter:description" content="香港毛孩物語寵物用品專門店，提供寵物必備貓狗生活用品同寵物玩具， 當中包括IATA寵物狗籠、飛機籠、寵物手推車、貓爬架、貓樹、寵物服裝配件等大量寵物傢俬，快啲嚟幫主子入貨啦！">
+<link href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/pre_theme.min.css?v=106275834470635101061669106240" rel="stylesheet" type="text/css" media="all" /><link rel="preload" as="script" href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/lazysizes.min.js?v=36113997772709414851646634915">
+<link rel="preload" as="script" href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/nt_vendor.min.js?v=146947875619088735741646634925">
+<script>document.documentElement.className = document.documentElement.className.replace('no-js', 'yes-js');const t_name = "index",designMode = false,t_cartCount = 0,t_shop_currency = "HKD", t_moneyFormat = "${{amount}}", t_cart_url = "\/cart",t_cartadd_url = "\/cart\/add",t_cartchange_url = "\/cart\/change", pr_re_url = "\/recommendations\/products"; function onloadt4relcss(_this) {_this.onload=null;_this.rel='stylesheet'} (function () {window.onpageshow = function() {if (performance.navigation.type === 2) {document.dispatchEvent(new CustomEvent('cart:refresh'))} }; })();
+var T4stt_str = { 
+  "PleaseChoosePrOptions":"Please_choose_pr_options", 
+  "will_not_ship":"will_not_ship_until_html",
+  "will_stock_after":"will_be_in_stock_after_html",
+  "replace_item_atc":"replace_item_atc",
+  "replace_item_pre":"replace_item_pre",
+  "added_to_cart": "加入購物車",
+  "view_cart": "查看購物車",
+  "continue_shopping": "繼續購物",
+  "save_js":"-[sale]%",
+  "save2_js":"",
+  "save3_js":"","bannerCountdown":"%D 日 %H:%M:%S",
+  "prItemCountdown":"%D 日 %H:%M:%S",
+  "countdown_days":"日",
+  "countdown_hours":"小時",
+  "countdown_mins":"分",
+  "countdown_sec":"秒",
+  "multiple_rates": "",
+  "one_rate": "one_rate",
+  "no_rates": "no_rates",
+  "rate_value": "",
+  "agree_checkout": "您必須同意本網店條款及細則以完成結帳手續，凡顧客已經付款但要退款者，本公司一律扣除訂單總額的20%作手續費。",
+  "added_text_cp":"比較產品"
+};
+</script>
+<link rel="preload" href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/style.min.css?v=26869152791739555341648429813" as="style" onload="onloadt4relcss(this)"><link href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/theme.css?enable_css_minification=1&amp;v=133924317511935305731669103800" rel="stylesheet" type="text/css" media="all" /><link rel="preload" href="https://fonts.googleapis.com/css?family=Lato:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i&display=swap" as="style" onload="onloadt4relcss(this)"><link rel="preload" href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/line-awesome.min.css?v=36930450349382045261646634918" as="style" onload="onloadt4relcss(this)">
+<script id="js_lzt4" src="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/lazysizes.min.js?v=36113997772709414851646634915" defer="defer"></script>
+<script src="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/nt_vendor.min.js?v=146947875619088735741646634925" defer="defer" id="js_ntt4"
+  data-theme='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/nt_theme.min.js?v=75328683643364397741646881536'
+  data-stt='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/nt_settings.js?enable_js_minification=1&v=154084863961412103441661917291'
+  data-cat='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/cat.min.js?v=85824874584819358021646634888' 
+  data-sw='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/swatch.min.js?v=104003103919505122731646634948'
+  data-prjs='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/produc.min.js?v=66856717831304081821646634932' 
+  data-mail='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/platform_mail.min.js?v=120104920183136925081646634930'
+  data-my='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/my.js?v=111603181540343972631646634920' data-cusp='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/my.js?v=111603181540343972631646634920' data-cur='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/my.js?v=111603181540343972631646634920' data-mdl='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/module.min.js?v=72712877271928395091646634920'
+  data-map='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/maplace.min.js?v=123640464312137447171646634918'
+  data-time='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/spacetime.min.js?2852'
+  data-ins='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/nt_instagram.min.js?v=67982783334426809631646634923'
+  data-user='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/interactable.min.js?v=144986550739491139891646634904'
+  data-add='//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-56efaa05a768bd19'
+  data-klaviyo='//www.klaviyo.com/media/js/public/klaviyo_subscribe.js'
+  data-font='iconKalles , fakalles , Pe-icon-7-stroke , Font Awesome 5 Free:n9'
+  data-fm='Lato'
+  data-spcmn='//cdn.shopify.com/shopifycloud/shopify/assets/themes_support/shopify_common-8ea6ac3faf357236a97f5de749df4da6e8436ca107bc3a4ee805cbf08bc47392.js'
+  data-cust='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/customerclnt.min.js?v=3252781937110261681646634892'
+  data-cusjs='none'
+  data-desadm='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/des_adm.min.js?v=68365964646950340461646634893'
+  data-otherryv='//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/reviewOther.js?enable_js_minification=1&v=72029929378534401331646634941'></script><!-- "snippets/buddha-megamenu.liquid" was not rendered, the associated app was uninstalled -->
+  <script>window.performance && window.performance.mark && window.performance.mark('shopify.content_for_header.start');</script><meta name="google-site-verification" content="mn7hXBiHsZ8XlMa0_1IkodOh8UZgW6qGDKRdinbWcF0">
+<meta id="shopify-digital-wallet" name="shopify-digital-wallet" content="/55058530481/digital_wallets/dialog">
+<meta name="shopify-checkout-api-token" content="79ee10ef5564a89822ed94ef870a0c44">
+<link rel="alternate" hreflang="x-default" href="https://petsthing.com.hk/">
+<link rel="alternate" hreflang="zh-Hant-HK" href="https://petsthing.com.hk/">
+<link rel="alternate" hreflang="en-HK" href="https://petsthing.com.hk/en">
+<script>
+  (function() {
+    var scripts = ["https://cdn.shopify.com/shopifycloud/checkout-web/assets/runtime.latest.zh-TW.d15426d87980bfee7dd6.js", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/checkout-web-packages~Information~NoAddressLocation~Payment~PostPurchase~Review~Shipping~ShopPay~Sho~cf13f96e.latest.zh-TW.04837ae4ff5a8e949953.js", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/Information~Payment~ShopPay.latest.zh-TW.5d7e7754e0edfdaabbcd.js", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/Information.latest.zh-TW.3091da08251b3eb3e03c.js", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/checkout-web-ui~app.latest.zh-TW.86cd9328cdcd6cd3a58f.js", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/vendors~app.latest.zh-TW.4a83a558b2df9aac2e79.js", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/checkout-web-packages~app.latest.zh-TW.94c2aa1432bcd78d2d2d.js", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/app.latest.zh-TW.77930c3c4a1b3293cc73.js"];
+    var styles = ["https://cdn.shopify.com/shopifycloud/checkout-web/assets/checkout-web-ui~app.latest.zh-TW.9f2a5e9ec696775e2217.css", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/vendors~app.latest.zh-TW.e788719f193b49c039a3.css", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/app.latest.zh-TW.6b4c79ead7042980b29d.css", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/Information~Payment~ShopPay.latest.zh-TW.da9f06164a980bf8e7ea.css", "https://cdn.shopify.com/shopifycloud/checkout-web/assets/Information.latest.zh-TW.9a0274ab07be120c1902.css"];
+
+    function prefetch(url, as, callback) {
+      var link = document.createElement('link');
+      if (link.relList.supports('prefetch')) {
+        link.rel = 'prefetch';
+        link.fetchPriority = 'low';
+        link.as = as;
+        link.href = url;
+        link.onload = link.onerror = callback;
+        document.head.appendChild(link);
+      } else {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onloadend = callback;
+        xhr.send();
+      }
+    }
+
+    function prefetchAssets() {
+      var resources = [].concat(
+        scripts.map(function(url) { return [url, 'script']; }),
+        styles.map(function(url) { return [url, 'style']; })
+      );
+      var index = 0;
+      (function next() {
+        var res = resources[index++];
+        if (res) prefetch(res[0], res[1], next);
+      })();
+    }
+
+    addEventListener('load', prefetchAssets);
+   })();
+</script>
+<script id="apple-pay-shop-capabilities" type="application/json">{"shopId":55058530481,"countryCode":"HK","currencyCode":"HKD","merchantCapabilities":["supports3DS"],"merchantId":"gid:\/\/shopify\/Shop\/55058530481","merchantName":"毛孩物語Pets Thing Pet Supplies Online Store｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹","requiredBillingContactFields":["postalAddress","email","phone"],"requiredShippingContactFields":["postalAddress","email","phone"],"shippingType":"shipping","supportedNetworks":["visa","masterCard","amex"],"total":{"type":"pending","label":"毛孩物語Pets Thing Pet Supplies Online Store｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹","amount":"1.00"},"shopifyPaymentsEnabled":true,"supportsSubscriptions":false}</script>
+<script id="shopify-features" type="application/json">{"accessToken":"79ee10ef5564a89822ed94ef870a0c44","betas":["rich-media-storefront-analytics"],"domain":"petsthing.com.hk","predictiveSearch":false,"shopId":55058530481,"smart_payment_buttons_url":"https:\/\/cdn.shopify.com\/shopifycloud\/payment-sheet\/assets\/latest\/spb.zh-tw.js?v=2","dynamic_checkout_cart_url":"https:\/\/cdn.shopify.com\/shopifycloud\/payment-sheet\/assets\/latest\/dynamic-checkout-cart.zh-tw.js?v=2","locale":"zh-tw","optimusEnabled":false}</script>
+<script>var Shopify = Shopify || {};
+Shopify.shop = "petsthinghk.myshopify.com";
+Shopify.locale = "zh-TW";
+Shopify.currency = {"active":"HKD","rate":"1.0"};
+Shopify.country = "HK";
+Shopify.theme = {"name":"Kalles 3.2.0","id":131236921580,"theme_store_id":null,"role":"main"};
+Shopify.theme.handle = "null";
+Shopify.theme.style = {"id":null,"handle":null};
+Shopify.cdnHost = "cdn.shopify.com";
+Shopify.routes = Shopify.routes || {};
+Shopify.routes.root = "/";</script>
+<script type="module">!function(o){(o.Shopify=o.Shopify||{}).modules=!0}(window);</script>
+<script>!function(o){function n(){var o=[];function n(){o.push(Array.prototype.slice.apply(arguments))}return n.q=o,n}var t=o.Shopify=o.Shopify||{};t.loadFeatures=n(),t.autoloadFeatures=n()}(window);</script>
+<script>(function() {
+  function asyncLoad() {
+    var urls = ["\/\/productreviews.shopifycdn.com\/embed\/loader.js?shop=petsthinghk.myshopify.com","https:\/\/gateway.apaylater.com\/plugins\/shopify-product-detail.js?shop=petsthinghk.myshopify.com","https:\/\/gateway.apaylater.com\/plugins\/shopify-product-list.js?shop=petsthinghk.myshopify.com","https:\/\/widgetic.com\/sdk\/sdk.js?shop=petsthinghk.myshopify.com","https:\/\/widgetic.com\/sdk\/sdk.js?shop=petsthinghk.myshopify.com","\/\/cdn.shopify.com\/proxy\/e6482d18b7a88188342afe2af0161b5904fe33d36b971e0fb4c8b8288d1bb6e3\/petsthing.activehosted.com\/js\/site-tracking.php?shop=petsthinghk.myshopify.com\u0026sp-cache-control=cHVibGljLCBtYXgtYWdlPTkwMA","\/\/cdn.shopify.com\/proxy\/544973202954102f19cc55cd17abb78dc66c8bbec56a66df0cdce153a81b6077\/petsthing55318.activehosted.com\/js\/site-tracking.php?shop=petsthinghk.myshopify.com\u0026sp-cache-control=cHVibGljLCBtYXgtYWdlPTkwMA","\/\/cdn.shopify.com\/proxy\/68fe6febe75f44e662c1f0d2b217e7285f5b999b6afc560cee80086252be3a97\/petsthing.activehosted.com\/f\/embed.php?id=3\u0026shop=petsthinghk.myshopify.com\u0026sp-cache-control=cHVibGljLCBtYXgtYWdlPTkwMA","https:\/\/cdn.shopify.com\/s\/files\/1\/0550\/5853\/0481\/t\/5\/assets\/pop_55058530481.js?v=1661851491\u0026shop=petsthinghk.myshopify.com","https:\/\/cdn-loyalty.yotpo.com\/loader\/fArrVUlhmrY1GnZAODuiwA.js?shop=petsthinghk.myshopify.com","\/\/cdn.shopify.com\/proxy\/33da6c8b48696f4a1f97e279d95615cf40369855dd1b06653f6344a3fb914dcd\/api.goaffpro.com\/loader.js?shop=petsthinghk.myshopify.com\u0026sp-cache-control=cHVibGljLCBtYXgtYWdlPTkwMA"];
+    for (var i = 0; i < urls.length; i++) {
+      var s = document.createElement('script');
+      s.type = 'text/javascript';
+      s.async = true;
+      s.src = urls[i];
+      var x = document.getElementsByTagName('script')[0];
+      x.parentNode.insertBefore(s, x);
+    }
+  };
+  if(window.attachEvent) {
+    window.attachEvent('onload', asyncLoad);
+  } else {
+    window.addEventListener('load', asyncLoad, false);
+  }
+})();</script>
+<script id="__st">var __st={"a":55058530481,"offset":28800,"reqid":"5f85f141-931c-4313-9cda-ae777584e391","pageurl":"petsthing.com.hk\/","u":"1716abd60974","p":"home"};</script>
+<script>window.ShopifyPaypalV4VisibilityTracking = true;</script>
+<script>!function(o){o.addEventListener("DOMContentLoaded",function(){window.Shopify=window.Shopify||{},window.Shopify.recaptchaV3=window.Shopify.recaptchaV3||{siteKey:"6LcCR2cUAAAAANS1Gpq_mDIJ2pQuJphsSQaUEuc9"};var t=['form[action*="/contact"] input[name="form_type"][value="contact"]','form[action*="/comments"] input[name="form_type"][value="new_comment"]','form[action*="/account"] input[name="form_type"][value="customer_login"]','form[action*="/account"] input[name="form_type"][value="recover_customer_password"]','form[action*="/account"] input[name="form_type"][value="create_customer"]','form[action*="/contact"] input[name="form_type"][value="customer"]'].join(",");function n(e){e=e.target;null==e||null!=(e=function e(t,n){if(null==t.parentElement)return null;if("FORM"!=t.parentElement.tagName)return e(t.parentElement,n);for(var o=t.parentElement.action,r=0;r<n.length;r++)if(-1!==o.indexOf(n[r]))return t.parentElement;return null}(e,["/contact","/comments","/account"]))&&null!=e.querySelector(t)&&((e=o.createElement("script")).setAttribute("src","https://cdn.shopify.com/shopifycloud/storefront-recaptcha-v3/v0.6/index.js"),o.body.appendChild(e),o.removeEventListener("focus",n,!0),o.removeEventListener("change",n,!0),o.removeEventListener("click",n,!0))}o.addEventListener("click",n,!0),o.addEventListener("change",n,!0),o.addEventListener("focus",n,!0)})}(document);</script>
+<script integrity="sha256-4VRZk5nmuLKdyxECzHbrGZ+jOgmvT6eNFej4VE7mT80=" data-source-attribution="shopify.loadfeatures" defer="defer" src="//cdn.shopify.com/shopifycloud/shopify/assets/storefront/load_feature-e154599399e6b8b29dcb1102cc76eb199fa33a09af4fa78d15e8f8544ee64fcd.js" crossorigin="anonymous"></script>
+<script integrity="sha256-h+g5mYiIAULyxidxudjy/2wpCz/3Rd1CbrDf4NudHa4=" data-source-attribution="shopify.dynamic-checkout" defer="defer" src="//cdn.shopify.com/shopifycloud/shopify/assets/storefront/features-87e8399988880142f2c62771b9d8f2ff6c290b3ff745dd426eb0dfe0db9d1dae.js" crossorigin="anonymous"></script>
+
+
+<style id="shopify-dynamic-checkout-cart">@media screen and (min-width: 750px) {
+  #dynamic-checkout-cart {
+    min-height: 50px;
+  }
+}
+
+@media screen and (max-width: 750px) {
+  #dynamic-checkout-cart {
+    min-height: 120px;
+  }
+}
+</style><script>window.performance && window.performance.mark && window.performance.mark('shopify.content_for_header.end');</script>
+  
+    <script src="https://cdn-widgetsrepository.yotpo.com/v1/loader/fArrVUlhmrY1GnZAODuiwA" async></script>
+      <script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "WebSite",
+	"name": "毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹",
+	"url": "https://petsthing.com.hk/",
+	"potentialAction": {
+		"@type": "SearchAction",
+		"target": "https://petsthing.com.hk/search?q={query}",
+		"query-input": "required name=query"
+	}
+}
+</script>
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "Organization",
+	"name": "毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹",
+	"url": "https://petsthing.com.hk/",
+    "logo": "https://cdn.shopify.com/s/files/1/0550/5853/0481/files/PetsThing-logo.png",
+	"sameAs": [
+		"https://www.facebook.com/petsthinghk",
+		"https://www.instagram.com/petsthinghk",
+		"https://www.youtube.com/channel/UCxOsn7ibVYheQojZQRer7dA",
+        "https://www.price.com.hk/page/petsthing",
+        "https://www.carousell.com.hk/u/petsthinghk/",
+        "https://shop.price.com.hk/petsthing/",
+        "https://petsthing.business.site/"
+        
+	]
+}
+</script>
+
+  
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question ","name":"落單後甚麼時候發貨或收到？","acceptedAnswer":{"@type":"Answer","text":"訂單處理時間：下訂單後的2－4天內，截單時間為星期一至五下午四時正。運送時間：快遞送貨 (5－7個工作天，不包括星期六、日及公眾假期)選取一般配送服務之訂單，將於付款成功並確認後5－7個工作天內(不包括星期六、日及公眾假期)處理及送達，實際時間視貨存而定。https://petsthing.com.hk/policies/shipping-policy"}} ,{"@type":"Question","name":"如何付款？","acceptedAnswer":{"@type":"Answer","text":"所有訂單將會以港幣結算，您可以在結帳時選擇付款方式。本公司接受VISA卡、萬事達卡、美國運通信用卡付款方式，為保障您的網上付款安全，在您輸入信用卡帳戶號碼後，請同時輸入列印在卡面(美國運通卡)或卡背(VISA卡/萬事達卡)上的保安編碼，讓您的發卡銀行/機構可核實您的身份。此外，我們也接受Payme、八達通App、Alipay HK、WeChat Pay HK、Apple Pay、Google Pay、FPS轉數快、銀聯、銀行轉帳：https://petsthing.com.hk/pages/payment-methods"}},{"@type":"Question","name":"產品有保養或售後服務嗎？","acceptedAnswer":{"@type":"Answer","text":"產品寄出時請勿拒收，收貨後若有任何問題請馬上拍照存證，並與毛孩物語Pets Thing客戶服務部聯絡。如因拒收或逾時未取，衍生的附加費需由顧客承擔，敬請注意：https://petsthing.com.hk/policies/refund-policy" }},{"@type":"Question","name":"有甚麼最新的寵物用品優惠？","acceptedAnswer":{"@type":"Answer","text":"毛孩物語為您提供最新毛孩產品、毛孩傢俬等精選優惠。訂閱毛孩電子快訊，讓您搜羅最新資訊、促銷活動。不同產品的優惠一眼睇曬，睇睇有咩優惠可以買野比毛孩：https://petsthing.com.hk/pages/promotion"}},{"@type":"Question","name":"如何選擇移民航空寵物飛機籠？","acceptedAnswer":{"@type":"Answer","text":"近幾個月有不少港人都計劃移民到外國，但考慮到主子在機倉逗留時間，不禁令大家諗起飛機籠的選擇疑問，今日就為大家幫主子用5個準則，選擇一個合適的飛機籠吧！
+https://petsthing.com.hk/blogs/news/how-to-choose-iata-airline-pet-carrier"}},{"@type":"Question","name":"香港寵物手推車大小合適嗎？","acceptedAnswer":{"@type":"Answer","text":"現在的寵物手推車功能已經成長到很齊全，最重要的是手推車的大小以及負重，針對不同寵物體重、用途及舒適度，挑選手推車的要求也有所不同，購買前應先考慮入手目的與平時載寵物的交通工具，究竟應該如何聰明選擇一台符合心目中想像的完美推車。
+https://petsthing.com.hk/blogs/news/5-things-to-consider-in-choosing-pet-stoller-in-hong-kong"}},{"@type":"Question", "name": "點先知道貓爬架／貓樹真係適合屋企貓貓呢？ ","acceptedAnswer":{"@type":"Answer","text":"有唔少嘅貓奴都會選擇購買貓樹去令貓咪做多啲運動，購買貓樹當然可以幫助貓咪消耗熱量、維持健康。但係同時都要留意貓樹係咪真係適合貓貓，先可以令貓貓玩得更開心，貓奴又可以更放心。
+https://petsthing.com.hk/blogs/news/how-to-choose-the-right-cat-scratching-tree"}},{"@type": "Question","name": "如何選擇香港狗樓梯狗斜坡？","acceptedAnswer": {"@type": "Answer","text": "有要保護保護狗狗關節或是老齡的狗狗腿部健康，可以用寵物樓梯或是斜坡，幫助改善屋企高低造成的不便。不過寵物對樓梯的需求不一樣，且根據種類與體型所適合的樓梯高度寬度、材質也不盡相同。
+https://petsthing.com.hk/blogs/news/how-to-choose-dog-stair-slope-in-hk"}}]}</script>  
+ <!-- Global site tag (gtag.js) - Google Analytics -->
+<script defer src="https://www.googletagmanager.com/gtag/js?id=G-Q8XBE84S30"></script>
+  
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-Q8XBE84S30');
+</script>
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "aa2mr9s6jo");
+</script>
+
+<script type="text/javascript">
+  window.Rivo = window.Rivo || {};
+  window.Rivo.common = window.Rivo.common || {};
+  window.Rivo.common.shop = {
+    permanent_domain: 'petsthinghk.myshopify.com',
+    currency: "HKD",
+    money_format: "${{amount}}",
+    id: 55058530481
+  };
+  
+
+  window.Rivo.common.template = 'index';
+  window.Rivo.common.cart = {};
+  window.Rivo.common.vapid_public_key = "BJuXCmrtTK335SuczdNVYrGVtP_WXn4jImChm49st7K7z7e8gxSZUKk4DhUpk8j2Xpiw5G4-ylNbMKLlKkUEU98=";
+  window.Rivo.global_config = {"asset_urls":{"loy":{"init_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_loy_init.js?v=1671947874","widget_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_loy_widget.js?v=1671947876","widget_css":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_loy_widget.css?v=1671227196","page_init_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_loy_page_init.js?v=1671947878","page_widget_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_loy_page_widget.js?v=1671947881","page_widget_css":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_loy_page.css?v=1671227203","page_preview_js":"\/assets\/msg\/loy_page_preview.js"},"rev":{"init_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_rev_init.js?v=1671715068","widget_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_rev_widget.js?v=1671715070","modal_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_rev_modal.js?v=1671715072","widget_css":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_rev_widget.css?v=1658336090","modal_css":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_rev_modal.css?v=1658336088"},"pu":{"init_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_pu_init.js?v=1635877170"},"widgets":{"init_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_widget_init.js?v=1671718210","modal_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_widget_modal.js?v=1671718212","modal_css":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_widget_modal.css?v=1654723622"},"forms":{"init_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_forms_init.js?v=1671947882","widget_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_forms_widget.js?v=1671947884","forms_css":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_forms.css?v=1654711758"},"global":{"helper_js":"https:\/\/cdn.shopify.com\/s\/files\/1\/0194\/1736\/6592\/t\/1\/assets\/ba_tracking.js?v=1671714963"}},"proxy_paths":{"pop":"\/apps\/ba-pop","app_metrics":"\/apps\/ba-pop\/app_metrics","push_subscription":"\/apps\/ba-pop\/push"},"aat":["pop"],"pv":false,"sts":false,"bam":false,"base_money_format":"${{amount}}"};
+
+  
+
+
+
+
+    window.Rivo.widgets_config = {"id":34536,"active":true,"frequency_limit_amount":1,"frequency_limit_time_unit":"weeks","background_image":{"position":"none","widget_background_preview_url":""},"initial_state":{"body":"關注獨家優惠！並領取5％折扣的迎新禮物吧！","title":"訂閱領取5％折扣","cta_text":"提交資料","show_email":"true","action_text":"資料提交中","footer_text":"您正在註冊以通過電子郵件接收通信，並且可以隨時取消訂閱。","dismiss_text":"不用了，謝謝","email_placeholder":"電郵地址","phone_placeholder":"Phone Number"},"success_state":{"body":"首個訂單可享受5%的折扣。只需在結帳時應用此代碼：","title":"恭喜！訂閱已成功。","cta_text":"繼續購物","cta_action":"dismiss","redirect_url":"","open_url_new_tab":"false"},"closed_state":{"action":"show_sticky_bar","font_size":"14","action_text":"首單5%折扣","display_offset":"400","display_position":"left"},"error_state":{"submit_error":"抱歉，請稍後再試","invalid_email":"請輸入有效的電子郵件地址！","error_subscribing":"系統出錯了，請稍後再試","already_registered":"您已經註冊","invalid_phone_number":"Please enter valid phone number!"},"trigger":{"action":"on_timer","delay_in_seconds":"3"},"colors":{"link_color":"#4FC3F7","sticky_bar_bg":"#dbad6c","cta_font_color":"#fff","body_font_color":"#000000","sticky_bar_text":"#fff","background_color":"#fff","error_text_color":"#ff2626","title_font_color":"#7e4f1d","footer_font_color":"#bbb","dismiss_font_color":"#bbb","cta_background_color":"#dbad6c","sticky_coupon_bar_bg":"#286ef8","error_text_background":"","sticky_coupon_bar_text":"#fff"},"sticky_coupon_bar":{"enabled":"false","message":"Don't forget to use your code"},"display_style":{"font":"Lato","size":"regular","align":"center"},"dismissable":true,"has_background":false,"opt_in_channels":["email"],"rules":[{"id":15210,"widget_id":34536,"property":"url","operator":"not_homepage","position":1,"value":"not homepage","boolean_connector":"AND","arguments":{},"created_at":"2022-08-30T09:43:54.243Z","updated_at":"2022-09-01T03:25:21.162Z"}],"widget_css":".powered_by_rivo{\n  display: none;\n}\n.ba_widget_main_design {\n  background: #fff;\n}\n.ba_widget_content{text-align: center}\n.ba_widget_parent{\n  font-family: Lato;\n}\n.ba_widget_parent.background{\n}\n.ba_widget_left_content{\n}\n.ba_widget_right_content{\n}\n#ba_widget_cta_button:disabled{\n  background: #dbad6ccc;\n}\n#ba_widget_cta_button{\n  background: #dbad6c;\n  color: #fff;\n}\n#ba_widget_cta_button:after {\n  background: #dbad6ce0;\n}\n.ba_initial_state_title, .ba_success_state_title{\n  color: #7e4f1d;\n}\n.ba_initial_state_body, .ba_success_state_body{\n  color: #000000;\n}\n.ba_initial_state_dismiss_text{\n  color: #bbb;\n}\n.ba_initial_state_footer_text, .ba_initial_state_sms_agreement{\n  color: #bbb;\n}\n.ba_widget_error{\n  color: #ff2626;\n  background: ;\n}\n.ba_link_color{\n  color: #4FC3F7;\n}\n","custom_css":".ba_widget_sticky_bar\u003ediv {\n    padding: 1px;\n    line-height: 1px;\n}","logo":"https:\/\/d15d3imw3mjndz.cloudfront.net\/7m2ygykaa5l8hp0a4ceok0o5b34g"};
+
+</script>
+
+
+<script type="text/javascript">
+  
+
+  //Global snippet for Rivo
+  //this is updated automatically - do not edit manually.
+
+  function loadScript(src, defer, done) {
+    var js = document.createElement('script');
+    js.src = src;
+    js.defer = defer;
+    js.onload = function(){done();};
+    js.onerror = function(){
+      done(new Error('Failed to load script ' + src));
+    };
+    document.head.appendChild(js);
+  }
+
+  function browserSupportsAllFeatures() {
+    return window.Promise && window.fetch && window.Symbol;
+  }
+
+  if (browserSupportsAllFeatures()) {
+    main();
+  } else {
+    loadScript('https://polyfill.io/v3/polyfill.min.js?features=Promise,fetch', true, main);
+  }
+
+  function loadAppScripts(){
+
+
+
+      loadScript(window.Rivo.global_config.asset_urls.widgets.init_js, true, function(){});
+  }
+
+  function main(err) {
+    //isolate the scope
+    loadScript(window.Rivo.global_config.asset_urls.global.helper_js, false, loadAppScripts);
+  }
+</script>
+
+<!-- BEGIN app block: shopify://apps/seo-json-ld-schema/blocks/howTo/b26797ad-bb4d-48f5-8ef3-7c561521049c --><!-- BEGIN app snippet: remove-script --><!-- END app snippet -->
+
+<!-- END app app block --><!-- BEGIN app block: shopify://apps/ecomposer-landing-page-builder/blocks/app-embed/a0fc26e1-7741-4773-8b27-39389b4fb4a0 --><link rel="preconnect" href="https://cdn.ecomposer.app" crossorigin />
+<link rel="dns-prefetch" href="https://cdn.ecomposer.app" />
+<link rel="prefetch" href="https://cdn.ecomposer.app/vendors/css/ecom-base.css" as="style" />
+<link rel="prefetch" href="https://cdn.ecomposer.app/vendors/css/ecom-swiper-bundle.min.css" as="style" />
+<link rel="prefetch" href="https://cdn.ecomposer.app/vendors/js/ecomposer_option_selection.js" as="script" />
+<link rel="prefetch" href="https://cdn.ecomposer.app/vendors/js/ecom-swiper-bundle.min.js" as="script" />
+<link rel="prefetch" href="https://cdn.ecomposer.app/vendors/js/ecom_modal.js" as="script" />
+     <!--ECOM-EMBED-->
+        <style id="ecom-global-css">
+            /**ECOM-INSERT-CSS**/.ecom-section > div.core__row--columns{max-width: 1600px;}.ecom-column>div.core__column--wrapper{padding: 0px;}div.core__blocks--body>div.ecom-block.elmspace:not(:first-child){margin-top: 0px;}:root{--ecom-global-colors-primary:#ffffff;--ecom-global-colors-secondary:#ffffff;--ecom-global-colors-text:#ffffff;--ecom-global-colors-accent:#ffffff;}
+        </style>
+    <!--/ECOM-EMBED-->
+
+<style type="text/css" class="ecom-theme-helper">
+    .ecom-animation{opacity:0}.ecom-animation.animate,.ecom-animation.ecom-animated{opacity:1}.ecom-cart-popup{display:grid;position:fixed;inset:0;z-index:9999999;align-content:center;padding:5px;justify-content:center;align-items:center;justify-items:center}.ecom-cart-popup::before{content:' ';position:absolute;background:#e5e5e5b3;inset:0}.ecom-ajax-loading{cursor:not-allowed;pointer-events:none;opacity:.6}#ecom-toast{visibility:hidden;max-width:50px;min-height:50px;margin:auto;background-color:#333;color:#fff;text-align:center;border-radius:2px;position:fixed;z-index:1;left:0;right:0;bottom:30px;font-size:17px;display:grid;grid-template-columns:50px auto;align-items:center;justify-content:start;align-content:center;justify-items:start}#ecom-toast.ecom-toast-show{visibility:visible;-webkit-animation:ecomFadein .5s,ecomExpand .5s .5s,ecomStay 3s 1s,ecomShrink .5s 2s,ecomFadeout .5s 2.5s;animation:ecomFadein .5s,ecomExpand .5s .5s,ecomStay 3s 1s,ecomShrink .5s 4s,ecomFadeout .5s 4.5s}#ecom-toast #ecom-toast-icon{width:50px;height:100%;box-sizing:border-box;background-color:#111;color:#fff;padding:5px}#ecom-toast .ecom-toast-icon-svg{width:100%;height:100%;display:block;position:relative;vertical-align:middle;margin:auto;text-align:center}#ecom-toast #ecom-toast-desc{color:#fff;padding:16px;overflow:hidden;white-space:nowrap}@-webkit-keyframes ecomFadein{from{bottom:0;opacity:0}to{bottom:30px;opacity:1}}@keyframes fadein{from{bottom:0;opacity:0}to{bottom:30px;opacity:1}}@-webkit-keyframes ecomExpand{from{min-width:50px}to{min-width:var(--ecom-max-width)}}@keyframes ecomExpand{from{min-width:50px}to{min-width:var(--ecom-max-width)}}@-webkit-keyframes ecomStay{from{min-width:var(--ecom-max-width)}to{min-width:var(--ecom-max-width)}}@keyframes ecomStay{from{min-width:var(--ecom-max-width)}to{min-width:var(--ecom-max-width)}}@-webkit-keyframes ecomShrink{from{min-width:var(--ecom-max-width)}to{min-width:50px}}@keyframes ecomShrink{from{min-width:var(--ecom-max-width)}to{min-width:50px}}@-webkit-keyframes ecomFadeout{from{bottom:30px;opacity:1}to{bottom:60px;opacity:0}}@keyframes ecomFadeout{from{bottom:30px;opacity:1}to{bottom:60px;opacity:0}}
+</style>
+<script type="text/javascript" id="ecom-theme-helpers" async="async">
+    window.EComposer = window.EComposer || {};
+    (function(){
+        if(!this.configs) this.configs = {};this.configs.ajax_cart = {
+            enable: false
+          };
+        
+      
+      	this.customer = false;
+      
+        this.routes = {
+            domain: 'https://petsthing.com.hk',
+            root_url: '/',
+            collections_url: '/collections',
+            all_products_collection_url: '/collections/all',
+            cart_url:'/cart',
+            cart_add_url:'/cart/add',
+            cart_change_url:'/cart/change',
+            cart_clear_url: '/cart/clear',
+            cart_update_url: '/cart/update',
+            product_recommendations_url: '/recommendations/products'
+        };
+        this.queryParams = {};
+        if (window.location.search.length) {
+            new URLSearchParams(window.location.search).forEach((value,key)=>{
+                this.queryParams[key] = value;
+            })
+        }
+        this.money_format = "${{amount}}",
+        this.money_with_currency_format = "HK${{amount}}",
+        
+        this.formatMoney=function(t,r){function a(t,r){return void 0===t?r:t}function e(t,r,e,o){if(r=a(r,2),e=a(e,","),o=a(o,"."),isNaN(t)||null==t)return 0;var n=(t=(t/100).toFixed(r)).split(".");return n[0].replace(/(\d)(?=(\d\d\d)+(?!\d))/g,"$1"+e)+(n[1]?o+n[1]:"")}"string"==typeof t&&(t=t.replace(".",""));var o="",n=/\{\{\s*(\w+)\s*\}\}/,i=r||this.money_format;switch(i.match(n)[1]){case"amount":o=e(t,2);break;case"amount_no_decimals":o=e(t,0);break;case"amount_with_comma_separator":o=e(t,2,".",",");break;case"amount_with_space_separator":o=e(t,2," ",",");break;case"amount_with_period_and_space_separator":o=e(t,2," ",".");break;case"amount_no_decimals_with_comma_separator":o=e(t,0,".",",");break;case"amount_no_decimals_with_space_separator":o=e(t,0," ");break;case"amount_with_apostrophe_separator":o=e(t,2,"'",".")}return i.replace(n,o)},this.resizeImage=function(t,r){try{if(-1===t.indexOf("cdn.shopify.com"))return t;if(!r||"original"==r||"full"==r||"master"==r)return t;var a=t.match(/\.(jpg|jpeg|gif|png|bmp|bitmap|tiff|tif)((\#[0-9a-z\-]+)?(\?v=.*)?)?$/gim);if(null==a)return null;var e=t.split(a[0]),o=a[0];return e[0]+"_"+r+o}catch(a){return t}},this.getProduct=function(t){if(!t)return!1;let r=("/"===this.routes.root_url?"":this.routes.root_url)+"/products/"+t+".js";return window.ECOM_LIVE&&(r="/shop/builder/ajax/ecom-proxy/products/"+t),window.fetch(r,{headers:{"Content-Type":"application/json"}}).then(t=>t.json())};
+    }).bind(window.EComposer)();
+</script>
+<script type="text/javascript" id="ecom-theme-quickview" async="async">
+    window.EComposer = window.EComposer || {};
+      (function() {
+        this.initQuickview = function() {
+            var enable_qv = false;
+              
+            const qv_wrapper_script = document.querySelector('#ecom-quickview-template-html');
+            if(!qv_wrapper_script) return;
+            const ecom_quickview = document.createElement('div');
+            ecom_quickview.classList.add('ecom-quickview');
+            ecom_quickview.innerHTML = qv_wrapper_script.innerHTML
+            document.body.prepend(ecom_quickview);
+            const qv_wrapper = ecom_quickview.querySelector('.ecom-quickview__wrapper');
+            
+            const ecomQuickview=function(e){const t=qv_wrapper.querySelector(".ecom-quickview__content-data");if(t){let c=document.createRange().createContextualFragment(e);t.innerHTML="",t.append(c),qv_wrapper.classList.add("ecom-open"),setTimeout((function(){qv_wrapper.classList.add("ecom-display")}),500),closeQuickview(t)}},closeQuickview=function(e){const t=qv_wrapper.querySelector(".ecom-quickview__close-btn");t&&t.addEventListener("click",(function(t){t.preventDefault(),qv_wrapper.classList.add("ecom-remove"),qv_wrapper.classList.remove("ecom-open","ecom-display","ecom-remove"),setTimeout((function(){e.innerHTML=""}),300)}))};function quickViewHandler(e){e&&e.preventDefault();const t=this;t.classList&&t.classList.add("ecom-loading");let c=t.classList?t.getAttribute("href"):window.location.pathname;if(c){if(window.location.search.includes("ecom_template_id")){let e=new URLSearchParams(location.search);c=window.location.pathname+"?section_id="+e.get("ecom_template_id")}else c+=(c.includes("?")?"&":"?")+"section_id=ecom-default-template-quickview";fetch(c).then((function(e){return 200==e.status?e.text():window.document.querySelector("#admin-bar-iframe")?(404==e.status?alert("Please create Ecomposer quickview template first!"):alert("Have some problem with quickview!"),t.classList&&t.classList.remove("ecom-loading"),!1):void window.open(new URL(c).pathname,"_blank")})).then((function(e){e&&(ecomQuickview(e),setTimeout((function(){t.classList&&t.classList.remove("ecom-loading")}),300))})).catch((function(e){}))}}
+            if(window.location.search.includes('ecom_template_id'))
+            {
+                setTimeout(quickViewHandler,1000)
+            }
+            if(enable_qv) {
+              const qv_buttons = document.querySelectorAll('.ecom-product-quickview');
+              if(qv_buttons.length > 0) {
+                qv_buttons.forEach(function(button, index) {
+                    button.addEventListener('click', quickViewHandler)
+                })
+              }
+            }
+        }
+    }).bind(window.EComposer)();
+</script>
+<script type="text/template" id="ecom-quickview-template-html">
+    <div class="ecom-quickview__wrapper ecom-dn"><div class="ecom-quickview__container"><div class="ecom-quickview__content"><div class="ecom-quickview__content-data"></div><span class="ecom-quickview__close-btn"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32" height="32" viewBox="0 0 32 32"><g id="icomoon-ignore"></g><path d="M10.722 9.969l-0.754 0.754 5.278 5.278-5.253 5.253 0.754 0.754 5.253-5.253 5.253 5.253 0.754-0.754-5.253-5.253 5.278-5.278-0.754-0.754-5.278 5.278z" fill="#000000"></path></svg></span></div></div></div>
+</script>
+<style type="text/css" class="ecom-theme-quickview">
+.ecom-quickview__wrapper{opacity:0;display:none;pointer-events:none}.ecom-quickview__wrapper.ecom-open{position:fixed;top:0;left:0;right:0;bottom:0;display:block;pointer-events:auto;z-index:100000;outline:0!important;-webkit-backface-visibility:hidden;opacity:1;transition:all .1s}.ecom-quickview__container{text-align:center;position:absolute;width:100%;height:100%;left:0;top:0;padding:0 8px;box-sizing:border-box;opacity:0;background-color:rgba(0,0,0,.8);transition:opacity .1s}.ecom-quickview__container:before{content:'';display:inline-block;height:100%;vertical-align:middle}.ecom-quickview__content{position:relative;display:inline-block;vertical-align:middle;margin:0 auto;text-align:left;z-index:9999;overflow-y:scroll}.ecom-quickview__content-data>.shopify-section{margin:0 auto;max-width:980px;overflow:hidden;position:relative;background-color:#fff;opacity:0;-webkit-transition:opacity .1s,-webkit-transform .1s;transition:transform .1s,opacity .1s,-webkit-transform .1s;-webkit-transform:translateX(-100px);transform:translateX(-100px)}.ecom-quickview__wrapper.ecom-display .ecom-quickview__content-data>.shopify-section{opacity:1;-webkit-transform:none;transform:none}.ecom-quickview__wrapper.ecom-display .ecom-quickview__container{opacity:1}.ecom-quickview__wrapper.ecom-remove #shopify-section-ecom-default-template-quickview{opacity:0;-webkit-transform:translateX(100px);transform:translateX(100px)}.ecom-quickview__close-btn{position:absolute!important;top:0;right:0;transform:none;background-color:transparent;color:#000;opacity:0;width:40px;height:40px;-webkit-transition:.25s;transition:.25s;z-index:99}.ecom-quickview__wrapper.ecom-display .ecom-quickview__close-btn{opacity:1}.ecom-quickview__close-btn:hover{cursor:pointer}@media screen and (max-width:1024px){.ecom-quickview__content{position:absolute;inset:0;margin:50px 15px}}
+</style>
+<script type="text/template" id="ecom-template-html">
+    <!-- BEGIN app snippet: ecom-toast --><div id="ecom-toast"><div id="ecom-toast-icon"><svg xmlns="http://www.w3.org/2000/svg" class="ecom-toast-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div id="ecom-toast-desc"></div></div><!-- END app snippet -->
+</script>
+<!-- END app app block --><!-- BEGIN app block: shopify://apps/seo-json-ld-schema/blocks/breadcrumb/b26797ad-bb4d-48f5-8ef3-7c561521049c -->
+
+
+
+
+
+<!-- END app app block --><!-- BEGIN app block: shopify://apps/yotpo-loyalty-rewards/blocks/loader-app-embed-block/2f9660df-5018-4e02-9868-ee1fb88d6ccd -->
+    <script src="https://cdn-widgetsrepository.yotpo.com/v1/loader/fArrVUlhmrY1GnZAODuiwA" async></script>
+
+
+
+    <script src="https://cdn-loyalty.yotpo.com/loader/fArrVUlhmrY1GnZAODuiwA.js?shop=petsthing.com.hk" async></script>
+
+
+
+<!-- END app app block --><!-- BEGIN app block: shopify://apps/seo-json-ld-schema/blocks/carousel/b26797ad-bb4d-48f5-8ef3-7c561521049c -->
+
+ 
+
+<!-- END app app block --><script src="https://cdn.shopify.com/extensions/efb49d56-0f69-4286-aa97-49d74bc55588/0.40.0/assets/ecom.js" type="text/javascript" defer="defer"></script>
+<script src="https://cdn.shopify.com/extensions/a041548e-8bb6-41a4-9f59-ac401141347a/1.0.0/assets/rivo-popup.js" type="text/javascript" defer="defer"></script>
+<meta property="og:image" content="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/PetsThing-logo-1200x628_6ec95f8f-08df-4898-b9cc-fbcaeb707ba4.jpg?v=1625041727" />
+<meta property="og:image:secure_url" content="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/PetsThing-logo-1200x628_6ec95f8f-08df-4898-b9cc-fbcaeb707ba4.jpg?v=1625041727" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="628" />
+<link href="https://monorail-edge.shopifysvc.com" rel="dns-prefetch">
+<script>(function(){if ("sendBeacon" in navigator && "performance" in window) {var session_token = document.cookie.match(/_shopify_s=([^;]*)/);function handle_abandonment_event(e) {var entries = performance.getEntries().filter(function(entry) {return /monorail-edge.shopifysvc.com/.test(entry.name);});if (!window.abandonment_tracked && entries.length === 0) {window.abandonment_tracked = true;var currentMs = Date.now();var navigation_start = performance.timing.navigationStart;var payload = {shop_id: 55058530481,url: window.location.href,navigation_start,duration: currentMs - navigation_start,session_token: session_token && session_token.length === 2 ? session_token[1] : "",page_type: "index"};window.navigator.sendBeacon("https://monorail-edge.shopifysvc.com/v1/produce", JSON.stringify({schema_id: "online_store_buyer_site_abandonment/1.1",payload: payload,metadata: {event_created_at_ms: currentMs,event_sent_at_ms: currentMs}}));}}window.addEventListener('pagehide', handle_abandonment_event);}}());</script>
+<script>window.ShopifyAnalytics = window.ShopifyAnalytics || {};
+window.ShopifyAnalytics.meta = window.ShopifyAnalytics.meta || {};
+window.ShopifyAnalytics.meta.currency = 'HKD';
+var meta = {"page":{"pageType":"home"}};
+for (var attr in meta) {
+  window.ShopifyAnalytics.meta[attr] = meta[attr];
+}</script>
+<script>window.ShopifyAnalytics.merchantGoogleAnalytics = function() {
+  
+};
+</script>
+<script class="analytics">(window.gaDevIds=window.gaDevIds||[]).push('BwiEti');
+
+
+(function () {
+  var customDocumentWrite = function(content) {
+    var jquery = null;
+
+    if (window.jQuery) {
+      jquery = window.jQuery;
+    } else if (window.Checkout && window.Checkout.$) {
+      jquery = window.Checkout.$;
+    }
+
+    if (jquery) {
+      jquery('body').append(content);
+    }
+  };
+
+  var hasLoggedConversion = function(token) {
+    if (token) {
+      return document.cookie.indexOf('loggedConversion=' + token) !== -1;
+    }
+    return false;
+  }
+
+  var setCookieIfConversion = function(token) {
+    if (token) {
+      var twoMonthsFromNow = new Date(Date.now());
+      twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
+
+      document.cookie = 'loggedConversion=' + token + '; expires=' + twoMonthsFromNow;
+    }
+  }
+
+  var trekkie = window.ShopifyAnalytics.lib = window.trekkie = window.trekkie || [];
+  if (trekkie.integrations) {
+    return;
+  }
+  trekkie.methods = [
+    'identify',
+    'page',
+    'ready',
+    'track',
+    'trackForm',
+    'trackLink'
+  ];
+  trekkie.factory = function(method) {
+    return function() {
+      var args = Array.prototype.slice.call(arguments);
+      args.unshift(method);
+      trekkie.push(args);
+      return trekkie;
+    };
+  };
+  for (var i = 0; i < trekkie.methods.length; i++) {
+    var key = trekkie.methods[i];
+    trekkie[key] = trekkie.factory(key);
+  }
+  trekkie.load = function(config) {
+    trekkie.config = config || {};
+    trekkie.config.initialDocumentCookie = document.cookie;
+    var first = document.getElementsByTagName('script')[0];
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.onerror = function(e) {
+      var scriptFallback = document.createElement('script');
+      scriptFallback.type = 'text/javascript';
+      scriptFallback.onerror = function(error) {
+              var Monorail = {
+      produce: function produce(monorailDomain, schemaId, payload) {
+        var currentMs = new Date().getTime();
+        var event = {
+          schema_id: schemaId,
+          payload: payload,
+          metadata: {
+            event_created_at_ms: currentMs,
+            event_sent_at_ms: currentMs
+          }
+        };
+        return Monorail.sendRequest("https://" + monorailDomain + "/v1/produce", JSON.stringify(event));
+      },
+      sendRequest: function sendRequest(endpointUrl, payload) {
+        // Try the sendBeacon API
+        if (window && window.navigator && typeof window.navigator.sendBeacon === 'function' && typeof window.Blob === 'function' && !Monorail.isIos12()) {
+          var blobData = new window.Blob([payload], {
+            type: 'text/plain'
+          });
+    
+          if (window.navigator.sendBeacon(endpointUrl, blobData)) {
+            return true;
+          } // sendBeacon was not successful
+    
+        } // XHR beacon   
+    
+        var xhr = new XMLHttpRequest();
+    
+        try {
+          xhr.open('POST', endpointUrl);
+          xhr.setRequestHeader('Content-Type', 'text/plain');
+          xhr.send(payload);
+        } catch (e) {
+          console.log(e);
+        }
+    
+        return false;
+      },
+      isIos12: function isIos12() {
+        return window.navigator.userAgent.lastIndexOf('iPhone; CPU iPhone OS 12_') !== -1 || window.navigator.userAgent.lastIndexOf('iPad; CPU OS 12_') !== -1;
+      }
+    };
+    Monorail.produce('monorail-edge.shopifysvc.com',
+      'trekkie_storefront_load_errors/1.1',
+      {shop_id: 55058530481,
+      theme_id: 131236921580,
+      app_name: "storefront",
+      context_url: window.location.href,
+      source_url: "https://cdn.shopify.com/s/trekkie.storefront.78639e237a77f8c6b21c79b35ca1873cb0a041d1.min.js"});
+
+      };
+      scriptFallback.async = true;
+      scriptFallback.src = 'https://cdn.shopify.com/s/trekkie.storefront.78639e237a77f8c6b21c79b35ca1873cb0a041d1.min.js';
+      first.parentNode.insertBefore(scriptFallback, first);
+    };
+    script.async = true;
+    script.src = 'https://cdn.shopify.com/s/trekkie.storefront.78639e237a77f8c6b21c79b35ca1873cb0a041d1.min.js';
+    first.parentNode.insertBefore(script, first);
+  };
+  trekkie.load(
+    {"Trekkie":{"appName":"storefront","development":false,"defaultAttributes":{"shopId":55058530481,"isMerchantRequest":null,"themeId":131236921580,"themeCityHash":"18049094316367486876","contentLanguage":"zh-TW","currency":"HKD"},"isServerSideCookieWritingEnabled":true,"monorailRegion":"shop_domain"},"Google Analytics":{"trackingId":"UA-191718659-1","domain":"auto","siteSpeedSampleRate":"10","enhancedEcommerce":true,"doubleClick":true,"includeSearch":true},"Facebook Pixel":{"pixelIds":["452094652779021"],"agent":"plshopify1.2"},"Google Gtag Pixel":{"conversionId":"AW-395095563","eventLabels":[{"type":"page_view","action_label":"AW-395095563\/5AAoCPHFxv4BEIvcsrwB"},{"type":"purchase","action_label":"AW-395095563\/sHJlCPTFxv4BEIvcsrwB"},{"type":"view_item","action_label":"AW-395095563\/T5PuCPfFxv4BEIvcsrwB"},{"type":"add_to_cart","action_label":"AW-395095563\/_W2XCPrFxv4BEIvcsrwB"},{"type":"begin_checkout","action_label":"AW-395095563\/skEACP3Fxv4BEIvcsrwB"},{"type":"search","action_label":"AW-395095563\/QyEJCIDGxv4BEIvcsrwB"},{"type":"add_payment_info","action_label":"AW-395095563\/d7boCIPGxv4BEIvcsrwB"}],"targetCountry":"HK"},"Session Attribution":{},"S2S":{"facebookCapiEnabled":true,"facebookAppPixelId":"452094652779021","source":"trekkie-storefront-renderer"}}
+  );
+
+  var loaded = false;
+  trekkie.ready(function() {
+    if (loaded) return;
+    loaded = true;
+
+    window.ShopifyAnalytics.lib = window.trekkie;
+    
+      ga('require', 'linker');
+      function addListener(element, type, callback) {
+        if (element.addEventListener) {
+          element.addEventListener(type, callback);
+        }
+        else if (element.attachEvent) {
+          element.attachEvent('on' + type, callback);
+        }
+      }
+      function decorate(event) {
+        event = event || window.event;
+        var target = event.target || event.srcElement;
+        if (target && (target.getAttribute('action') || target.getAttribute('href'))) {
+          ga(function (tracker) {
+            var linkerParam = tracker.get('linkerParam');
+            document.cookie = '_shopify_ga=' + linkerParam + '; ' + 'path=/';
+          });
+        }
+      }
+      addListener(window, 'load', function(){
+        for (var i=0; i < document.forms.length; i++) {
+          var action = document.forms[i].getAttribute('action');
+          if(action && action.indexOf('/cart') >= 0) {
+            addListener(document.forms[i], 'submit', decorate);
+          }
+        }
+        for (var i=0; i < document.links.length; i++) {
+          var href = document.links[i].getAttribute('href');
+          if(href && href.indexOf('/checkout') >= 0) {
+            addListener(document.links[i], 'click', decorate);
+          }
+        }
+      });
+    
+
+    var originalDocumentWrite = document.write;
+    document.write = customDocumentWrite;
+    try { window.ShopifyAnalytics.merchantGoogleAnalytics.call(this); } catch(error) {};
+    document.write = originalDocumentWrite;
+
+    window.ShopifyAnalytics.lib.page(null,{"pageType":"home"});
+
+    var match = window.location.pathname.match(/checkouts\/(.+)\/(thank_you|post_purchase)/)
+    var token = match? match[1]: undefined;
+    if (!hasLoggedConversion(token)) {
+      setCookieIfConversion(token);
+      
+    }
+  });
+
+  
+      var eventsListenerScript = document.createElement('script');
+      eventsListenerScript.async = true;
+      eventsListenerScript.src = "//cdn.shopify.com/shopifycloud/shopify/assets/shop_events_listener-65cd0ba3fcd81a1df33f2510ec5bcf8c0e0958653b50e3965ec972dd638ee13f.js";
+      document.getElementsByTagName('head')[0].appendChild(eventsListenerScript);
+    
+})();</script>
+<script class="boomerang">
+(function () {
+  if (window.BOOMR && (window.BOOMR.version || window.BOOMR.snippetExecuted)) {
+    return;
+  }
+  window.BOOMR = window.BOOMR || {};
+  window.BOOMR.snippetStart = new Date().getTime();
+  window.BOOMR.snippetExecuted = true;
+  window.BOOMR.snippetVersion = 12;
+  window.BOOMR.application = "storefront-renderer";
+  window.BOOMR.themeName = "Kalles";
+  window.BOOMR.themeVersion = "3.2.0";
+  window.BOOMR.shopId = 55058530481;
+  window.BOOMR.themeId = 131236921580;
+  window.BOOMR.renderRegion = "gcp-us-central1";
+  window.BOOMR.url =
+    "https://cdn.shopify.com/shopifycloud/boomerang/shopify-boomerang-1.0.0.min.js";
+  var where = document.currentScript || document.getElementsByTagName("script")[0];
+  var parentNode = where.parentNode;
+  var promoted = false;
+  var LOADER_TIMEOUT = 3000;
+  function promote() {
+    if (promoted) {
+      return;
+    }
+    var script = document.createElement("script");
+    script.id = "boomr-scr-as";
+    script.src = window.BOOMR.url;
+    script.async = true;
+    parentNode.appendChild(script);
+    promoted = true;
+  }
+  function iframeLoader(wasFallback) {
+    promoted = true;
+    var dom, bootstrap, iframe, iframeStyle;
+    var doc = document;
+    var win = window;
+    window.BOOMR.snippetMethod = wasFallback ? "if" : "i";
+    bootstrap = function(parent, scriptId) {
+      var script = doc.createElement("script");
+      script.id = scriptId || "boomr-if-as";
+      script.src = window.BOOMR.url;
+      BOOMR_lstart = new Date().getTime();
+      parent = parent || doc.body;
+      parent.appendChild(script);
+    };
+    if (!window.addEventListener && window.attachEvent && navigator.userAgent.match(/MSIE [67]./)) {
+      window.BOOMR.snippetMethod = "s";
+      bootstrap(parentNode, "boomr-async");
+      return;
+    }
+    iframe = document.createElement("IFRAME");
+    iframe.src = "about:blank";
+    iframe.title = "";
+    iframe.role = "presentation";
+    iframe.loading = "eager";
+    iframeStyle = (iframe.frameElement || iframe).style;
+    iframeStyle.width = 0;
+    iframeStyle.height = 0;
+    iframeStyle.border = 0;
+    iframeStyle.display = "none";
+    parentNode.appendChild(iframe);
+    try {
+      win = iframe.contentWindow;
+      doc = win.document.open();
+    } catch (e) {
+      dom = document.domain;
+      iframe.src = "javascript:var d=document.open();d.domain='" + dom + "';void(0);";
+      win = iframe.contentWindow;
+      doc = win.document.open();
+    }
+    if (dom) {
+      doc._boomrl = function() {
+        this.domain = dom;
+        bootstrap();
+      };
+      doc.write("<body onload='document._boomrl();'>");
+    } else {
+      win._boomrl = function() {
+        bootstrap();
+      };
+      if (win.addEventListener) {
+        win.addEventListener("load", win._boomrl, false);
+      } else if (win.attachEvent) {
+        win.attachEvent("onload", win._boomrl);
+      }
+    }
+    doc.close();
+  }
+  var link = document.createElement("link");
+  if (link.relList &&
+    typeof link.relList.supports === "function" &&
+    link.relList.supports("preload") &&
+    ("as" in link)) {
+    window.BOOMR.snippetMethod = "p";
+    link.href = window.BOOMR.url;
+    link.rel = "preload";
+    link.as = "script";
+    link.addEventListener("load", promote);
+    link.addEventListener("error", function() {
+      iframeLoader(true);
+    });
+    setTimeout(function() {
+      if (!promoted) {
+        iframeLoader(true);
+      }
+    }, LOADER_TIMEOUT);
+    BOOMR_lstart = new Date().getTime();
+    parentNode.appendChild(link);
+  } else {
+    iframeLoader(false);
+  }
+  function boomerangSaveLoadTime(e) {
+    window.BOOMR_onload = (e && e.timeStamp) || new Date().getTime();
+  }
+  if (window.addEventListener) {
+    window.addEventListener("load", boomerangSaveLoadTime, false);
+  } else if (window.attachEvent) {
+    window.attachEvent("onload", boomerangSaveLoadTime);
+  }
+  if (document.addEventListener) {
+    document.addEventListener("onBoomerangLoaded", function(e) {
+      e.detail.BOOMR.init({
+        ResourceTiming: {
+          enabled: true,
+          trackedResourceTypes: ["script", "img", "css"]
+        },
+      });
+      e.detail.BOOMR.t_end = new Date().getTime();
+    });
+  } else if (document.attachEvent) {
+    document.attachEvent("onpropertychange", function(e) {
+      if (!e) e=event;
+      if (e.propertyName === "onBoomerangLoaded") {
+        e.detail.BOOMR.init({
+          ResourceTiming: {
+            enabled: true,
+            trackedResourceTypes: ["script", "img", "css"]
+          },
+        });
+        e.detail.BOOMR.t_end = new Date().getTime();
+      }
+    });
+  }
+})();</script>
+<script id="web-pixels-manager-setup">(function e(e,n,a,o,t,r){e&&(window.Shopify=window.Shopify||{},window.Shopify.analytics=window.Shopify.analytics||{},window.Shopify.analytics.replayQueue=[],window.Shopify.analytics.publish=function(e,n,a){window.Shopify.analytics.replayQueue.push([e,n,a])});var i,s,l,d,c,u,p,f,h,y=function(){var e="legacy",n="unknown",a=null,o=navigator.userAgent.match(/(Firefox|Chrome)\/(\d+)/i),t=navigator.userAgent.match(/(Edg)\/(\d+)/i),r=navigator.userAgent.match(/(Version)\/(\d+)(.+)(Safari)\/(\d+)/i);r?(n="safari",a=parseInt(r[2],10)):t?(n="edge",a=parseInt(t[2],10)):o&&(n=o[1].toLocaleLowerCase(),a=parseInt(o[2],10));var i={chrome:60,firefox:55,safari:11,edge:80}[n];return void 0!==i&&null!==a&&i<=a&&(e="modern"),e}();i="string"==typeof r&&r.length>0?a+"/"+o.substring(0,1)+r+y.substring(0,1)+".js":a+"/"+o+"."+y+".js",s={src:i,async:!0,onload:function(){if(e){var a=window.webPixelsManager.init(e);n(a),window.Shopify.analytics.replayQueue.forEach((function(e){a.publishCustomEvent(e[0],e[1],e[2])})),window.Shopify.analytics.replayQueue=[],window.Shopify.analytics.publish=a.publishCustomEvent}},onerror:function(){var n=(e.storefrontBaseUrl?e.storefrontBaseUrl.replace(/\/$/,""):self.location.origin)+"/.well-known/shopify/monorail/unstable/produce_batch",a=JSON.stringify({metadata:{event_sent_at_ms:(new Date).getTime()},events:[{schema_id:"web_pixels_manager_load/2.0",payload:{version:t||"latest",page_url:self.location.href,status:"failed",error_msg:i+" has failed to load"},metadata:{event_created_at_ms:(new Date).getTime()}}]});try{if(self.navigator.sendBeacon.bind(self.navigator)(n,a))return!0}catch(e){}const o=new XMLHttpRequest;try{return o.open("POST",n,!0),o.setRequestHeader("Content-Type","text/plain"),o.send(a),!0}catch(e){console&&console.warn&&console.warn("[Web Pixels Manager] Got an unhandled error while logging a load error.")}return!1}},l=document.createElement("script"),d=s.src,c=s.async||!0,u=s.onload,p=s.onerror,f=document.head,h=document.body,l.async=c,l.src=d,u&&l.addEventListener("load",u),p&&l.addEventListener("error",p),f?f.appendChild(l):h?h.appendChild(l):console.error("Did not find a head or body element to append the script")})({shopId: 55058530481,storefrontBaseUrl: "https://petsthing.com.hk",cdnBaseUrl: "https://cdn.shopify.com",surface: "storefront-renderer",enabledBetaFlags: ["web_pixels_use_shop_domain_monorail_endpoint","web_pixels_shopify_pixel_validation","web_pixels_use_hash_urls"],webPixelExtensionBaseUrl: "https://cdn.shopify.com",webPixelsConfigList: [{"id":"shopify-app-pixel","configuration":"{}","eventPayloadVersion":"v1","runtimeContext":"STRICT","scriptVersion":"0510","apiClientId":"shopify-pixel","type":"APP"},{"id":"shopify-custom-pixel","eventPayloadVersion":"v1","runtimeContext":"LAX","scriptVersion":"0510","apiClientId":"shopify-pixel","type":"CUSTOM"}],initData: {"cart":null,"checkout":null,"customer":null,"productVariants":[]},},function pageEvents(webPixelsManagerAPI) {webPixelsManagerAPI.publish("page_viewed");},"https://cdn.shopify.com","browser","0.0.236","dccd5d3cw10e1ada4p6b39352amee6b977d");</script></head>
+<body class="kalles_2-0 lazy_icons min_cqty_0 btnt4_style_2 zoom_tp_2 css_scrollbar template-index js_search_true cart_pos_side kalles_toolbar_true hover_img2 swatch_style_rounded swatch_list_size_small label_style_rounded wrapper_cus header_full_true header_sticky_true hide_scrolld_true des_header_3 h_transparent_false h_tr_top_false h_banner_true top_bar_true catalog_mode_false cat_sticky_true prs_bordered_grid_1 prs_sw_limit_false search_pos_canvas t4_compare_false dark_mode_false h_chan_space_false type_quickview_2 des_btns_prmb_1 t4_cart_count_0  lazyloadt4s js_search_type rtl_false">
+  <!-- Messenger 洽談附加程式 Code -->
+    <div id="fb-root"></div>
+
+    <!-- Your 洽談附加程式 code -->
+    <div id="fb-customer-chat" class="fb-customerchat">
+    </div>
+
+    <script>
+      var chatbox = document.getElementById('fb-customer-chat');
+      chatbox.setAttribute("page_id", "100105235496805");
+      chatbox.setAttribute("attribution", "biz_inbox");
+    </script>
+
+    <!-- Your SDK code -->
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          xfbml            : true,
+          version          : 'v12.0'
+        });
+      };
+
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = 'https://connect.facebook.net/zh_HK/sdk/xfbml.customerchat.js';
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script><a class="in-page-link visually-hidden skip-link" href="#nt_content">直接到內容</a>
+<div id="ld_cl_bar" class="op__0 pe_none"></div><div id="shopify-section-header_banner" class="shopify-section type_carousel tp_se_cdth"><div class="h__banner bgp pt__10 pb__10 fs__14 flex fl_center al_center pr oh show_icon_false" data-ver='1' data-date='2'><div class="container">
+   <div class="row al_center"><a href="https://petsthing.com.hk/policies/shipping-policy" class="pa t__0 l__0 r__0 b__0 z_100"></a><div class="col h_banner_wrap tc cw">運送上有機會延遲，請在購買前諮詢我們確認</div></div>
+</div></div><style data-shopify>.h__banner { background-color: #daad6c;min-height:20px;font-size:15px;}.h_banner_wrap {color:#ffffff }.h_banner_close,.h_banner_close:hover,.h_banner_close:focus {color:#ffffff !important }.h_banner_close:after, .h_banner_close:before {background-color:#ffffff }</style></div><div id="nt_wrapper"><header id="ntheader" class="ntheader header_3 h_icon_iccl"><h1 class="h2 site-header__logo dn">毛孩物語Pets Thing Pet Supplies Online Store｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹</h1><div class="ntheader_wrapper pr z_200"><div id="shopify-section-header_top" class="shopify-section type_carousel"><div class="h__top bgbl pt__10 pb__10 fs__12 flex fl_center al_center"><div class="container">
+   <div class="row al_center"><div class="col-lg-4 col-12 tc tl_lg col-md-12 dn_true_1024"><div class="nt-social border_ black_"><a data-no-instant rel="noopener noreferrer nofollow" href="https://www.facebook.com/petsthinghk" target="_blank" class="facebook cb ttip_nt tooltip_bottom_right"><span class="tt_txt">追蹤Facebook</span><i class="facl facl-facebook"></i></a><a data-no-instant rel="noopener noreferrer nofollow" href="https://www.instagram.com/petsthinghk/" target="_blank" class="instagram cb ttip_nt tooltip_bottom_right"><span class="tt_txt">追蹤Instagram</span><i class="facl facl-instagram"></i></a><a data-no-instant rel="noopener noreferrer nofollow" href="https://www.youtube.com/channel/UCxOsn7ibVYheQojZQRer7dA" target="_blank" class="youtube cb ttip_nt tooltip_bottom_right"><span class="tt_txt">追蹤Youtube</span><i class="facl facl-youtube-play"></i></a></div>
+
+</div><div class="col-lg-4 col-12 tc col-md-12 dn_false_1024"><div class="header-text"><p>購物<a href="#cr" title="#cr"><strong>滿$400享95折</strong></a></p></div></div><div class="col-lg-4 col-12 tc col-md-12 tr_lg dn_true_1024"><div class="nt_currency pr cg languages sp_languages wsn dib mr__15 cur_stt_0"><span class="current dib  lazyloadt4s flagst4- flagst4-zh-TW">繁體中文</span><i class="facl facl-angle-down ml__5"></i>
+    <ul class="pa pe_none ts__03 bgbl ul_none tl op__0 z_100 r__0 pt__15 pb__15 pr__15 pl__15">
+      <li><a class="lang-item cg db  lazyloadt4s flagst4- flagst4-T4D dn" href="/" data-no-instant rel="nofollow" data-currency="T4D"></a></li><li><a class="lang-item cg db  lazyloadt4s flagst4- flagst4-zh-TW selected" href="/" data-no-instant rel="nofollow" data-currency="zh-TW">繁體中文</a></li><li><a class="lang-item cg db  lazyloadt4s flagst4- flagst4-en" href="/" data-no-instant rel="nofollow" data-currency="en">English</a></li></ul></div></div></div>
+</div></div><style data-shopify>.h__top {min-height:50px;font-size:15px;}h__top,.h__top.bgbl { background-color: #6a3906;color:#ffffff } .header-text >.cg,.h__top .nt_currency,.h__top .nt-social .cb { color:#ffffff  } .h__top .cr { color:#daad6c  } .header-text >a:not(.cg),.dark_mode_true .header-text>a:not(.cg) { color:#ffd597  }</style></div><div id="shopify-section-header_3" class="shopify-section sp_header_mid"><div class="header__mid"><div class="container">
+     <div class="row al_center css_h_se">
+        <div class="col-md-4 col-3 dn_lg"><a href="/" data-id='#nt_menu_canvas' class="push_side push-menu-btn  lh__1 flex al_center"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="16" viewBox="0 0 30 16"><rect width="30" height="1.5"></rect><rect y="7" width="20" height="1.5"></rect><rect y="14" width="30" height="1.5"></rect></svg></a></div>
+        <div class="col-lg-2 col-md-4 col-6 tc tl_lg"><div class=" branding ts__05 lh__1"><a class="dib" href="/" ><img class="w__100 logo_normal dn db_lg" src="//cdn.shopify.com/s/files/1/0550/5853/0481/files/PetsThing-logo.svg?v=3088764756505448595" alt="毛孩物語Pets Thing Pet Supplies Online Store｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹" style="width: 95px">
+	   <img class="w__100 logo_sticky dn" src="//cdn.shopify.com/s/files/1/0550/5853/0481/files/PetsThing-logo.svg?v=3088764756505448595" alt="毛孩物語Pets Thing Pet Supplies Online Store｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹" style="width: 100px">
+	   <img class="w__100 logo_mobile dn_lg" src="//cdn.shopify.com/s/files/1/0550/5853/0481/files/PetsThing-logo.svg?v=3088764756505448595" alt="毛孩物語Pets Thing Pet Supplies Online Store｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹" style="width: 100px"></a></div> </div>
+        <div class="col dn db_lg"><nav class="nt_navigation tc hover_side_up nav_arrow_true"> 
+   <ul id="nt_menu_id" class="nt_menu in_flex wrap al_center"><li id="item_fbc0a28a-3877-4237-8c28-f0b5ad9c46fa" class="menu-item type_simple" ><a class="lh__1 flex al_center pr" href="/pages/promotion" target="_self"><i class="las la-tags"></i>最新優惠<span class="lbc_nav" style="background-color: #ec746c">HOT</span></a></li>
+<li id="item_953937b8-e484-48aa-9d6c-55706cf30913" class="menu-item type_simple" ><a class="lh__1 flex al_center pr" href="/collections/pet-friendly-design-furniture" target="_self"><i class="las la-percent"></i>人寵共用傢俬<span class="lbc_nav" style="background-color: #01bad4">NEW</span></a></li>
+<li id="item_4bbfcb64-0cd2-4ac7-bb32-4a3bc362cbe2" class="type_mega menu_wid_cus menu-item has-children menu_has_offsets menu_center pos_center" >
+               <a class="lh__1 flex al_center pr" href="/collections/cat" target="_self"><i class="las la-cat"></i>貓貓系列</a>
+               <div class="cus sub-menu"><div class="container" style="width:1000px"><div class="row lazy_menu lazyloadt4s lazy_menu_mega" data-t4splitlz data-rendert4s="/collections/all/4bbfcb64-0cd2-4ac7-bb32-4a3bc362cbe2+ntt4tag" data-jspackery='{ "itemSelector": ".sub-column-item","gutter": 0,"percentPosition": true,"originLeft": true }' data-set4url='/?section_id=header_3'><div class="lds_bginfinity pr"></div></div></div></div>
+            </li><li id="item_2dfbc8f3-c53d-4e81-b2d5-c06ca027d22a" class="type_mega menu_wid_cus menu-item has-children menu_has_offsets menu_center pos_center" >
+               <a class="lh__1 flex al_center pr" href="/collections/dog" target="_self"><i class="las la-dog"></i>狗狗系列</a>
+               <div class="cus sub-menu"><div class="container" style="width:1000px"><div class="row lazy_menu lazyloadt4s lazy_menu_mega" data-t4splitlz data-rendert4s="/collections/all/2dfbc8f3-c53d-4e81-b2d5-c06ca027d22a+ntt4tag" data-jspackery='{ "itemSelector": ".sub-column-item","gutter": 0,"percentPosition": true,"originLeft": true }' data-set4url='/?section_id=header_3'><div class="lds_bginfinity pr"></div></div></div></div>
+            </li><li id="item_4c7650f5-c362-41c8-bd8d-d9083473631f" class="menu-item type_simple" ><a class="lh__1 flex al_center pr" href="/pages/iata-pet-carrier-measure-calculator" target="_self"><i class="las la-plane"></i>移民選籠</a></li>
+<li id="item_22703aac-2548-4a07-a490-6c496751d0fc" class="menu-item type_simple" ><a class="lh__1 flex al_center pr" href="/blogs/news/5-things-to-consider-in-choosing-pet-stoller-in-hong-kong" target="_self"><i class="las la-baby-carriage"></i>寵物選車</a></li>
+<li id="item_9bceab34-844d-44f8-955f-ffa694173603" class="type_dropdown menu_wid_ menu-item has-children menu_has_offsets menu_right pos_right" >
+               <a class="lh__1 flex al_center pr" href="/pages/pet-dollars-petsthing-reward-system" target="_self"><i class="las la-coins"></i>積分回贈<span class="lbc_nav" style="background-color: #daad6c">REWARD</span></a><div class="sub-menu"><div data-set4url='/?section_id=header_3' class="lazy_menu lazyloadt4s" data-t4splitlz data-rendert4s="/collections/all/9bceab34-844d-44f8-955f-ffa694173603+ntt4tag"><div class="lds_bginfinity pr"></div></div></div></li></ul>
+</nav>
+</div>
+        <div class="col-lg-auto col-md-4 col-3 tr col_group_btns"><div class="nt_action in_flex al_center cart_des_1"><a class="icon_search push_side cb chp" data-id="#nt_search_canvas" href="/search"><i class="iccl iccl-search"></i></a>
+     
+          <div class="my-account ts__05 pr dn db_md">
+             <a class="cb chp db push_side" href="/account/login" data-id="#nt_login_canvas"><i class="iccl iccl-user"></i></a></div><a class="icon_like cb chp pr dn db_md js_link_wis" href="/search/?view=wish"><i class="iccl iccl-heart pr"><span class="op__0 ts_op pa tcount jswcount bgb br__50 cw tc">0</span></i></a><div class="icon_cart pr"><a class="push_side pr cb chp db" href="/cart" data-id="#nt_cart_canvas"><i class="iccl iccl-cart pr"><span class="op__0 ts_op pa tcount jsccount bgb br__50 cw tc">0</span></i></a></div></div></div></div>
+  </div></div><style>.header__mid .css_h_se {min-height: 70px}.nt_menu >li>a{height:70px}</style></div></div>
+</header>
+<div id="nt_content">
+
+
+<div id="shopify-section-template--15766304227564__16357021760efbe511" class="shopify-section nt_section type_slideshow type_carousel tp_se_cdt2"><div class="SlideshowWrapper nt_se_template--15766304227564__16357021760efbe511 nt_full se_height_cus_h nt_first">
+  <div class="fade_flick_1 slideshow row no-gutters equal_nt nt_slider js_carousel prev_next_0 btn_owl_3 dot_owl_2 dot_color_1 btn_vi_1" data-flickityt4s-js='{ "fade":0,"cellAlign": "center","imagesLoaded": 0,"lazyload": 0,"freeScroll": 0,"wrapAround": true,"autoPlay" : 9000,"pauseAutoPlayOnHover" : true, "rightToLeft": false, "prevNextButtons": false,"pageDots": true, "contain" : 1,"adaptiveHeight" : 1,"dragThreshold" : 5,"percentPosition": 1 }'><div id="nt_efbcd4f5-7366-4386-986c-b50e2588aaea" class="col-12 slideshow__slide bg_content_false border_bl_false br_style_solid"><div class="oh pr nt_img_txt"><div class="js_full_ht4 img_slider_block dek_img_slide">
+                     <div class="bg_rp_norepeat bg_sz_cover lazyloadt4s item__position center top img_zoom pa l__0 t__0 r__0 b__0" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-discount-5off_1x1.jpg?v=1677658405" data-ratio="1.5" data-sizes="auto"></div>
+                  </div>
+                  <div class="js_full_ht4 img_slider_block mb_img_slide">
+                     <div class="bg_rp_norepeat bg_sz_cover lazyloadt4s item__position center top img_zoom pa l__0 t__0 r__0 b__0" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-discount-5off_1x1.jpg?v=1677658405" data-ratio="1.5" data-sizes="auto"></div>
+                  </div><div class="caption-wrap caption-w-1 pe_none z_100 tl_md tl">
+                  <div class="pa_txts mb_h_pos3 mb_v_pos85 h_pos3 v_pos50 caption">
+                     <div class="bottom_top"><div id="b_479b5f2e-82c4-4cc4-9443-6d2a3f967622" class="slt4_txt mg__0 lh__1 f_body">寵物用品優惠</div><div id="b_426077b2-6d12-4eda-9c3d-72fbd02d2ed2" class="slt4_space"></div><div id="b_19bfb644-3273-4969-ab91-ef8c4c25c096" class="slt4_txt mg__0 lh__1 f_heading">購物滿$400享95折</div><div id="b_c20f93b2-885d-4c54-a704-1e7a2375c823" class="slt4_space"></div><a id="b_516e24b9-7146-4a0c-9ea6-2f7b11689ab6" class="slt4_btn button pe_auto round_ btn_icon_false btn_w_false" href="/pages/promotion" target="_blank">查看詳情</a></div>
+                  </div> 
+                 </div>
+                 <a href="/pages/promotion" target="_blank" class="pa t__0 l__0 b__0 r__0"></a>
+               </div>
+            </div><div id="nt_54f499e9-6701-4a9f-85ff-39200a5cb5cb" class="col-12 slideshow__slide bg_content_false border_bl_false br_style_solid"><div class="oh pr nt_img_txt"><div class="js_full_ht4 img_slider_block dek_img_slide">
+                     <div class="bg_rp_norepeat bg_sz_cover lazyloadt4s item__position center center img_zoom pa l__0 t__0 r__0 b__0" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-pet-dollar-1920x1080_1x1.jpg?v=1667273055" data-ratio="1.7777777777777777" data-sizes="auto"></div>
+                  </div>
+                  <div class="js_full_ht4 img_slider_block mb_img_slide">
+                     <div class="bg_rp_norepeat bg_sz_cover lazyloadt4s item__position center center img_zoom pa l__0 t__0 r__0 b__0" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-pet-dollar-1920x1080_1x1.jpg?v=1667273055" data-ratio="1.7777777777777777" data-sizes="auto"></div>
+                  </div><div class="caption-wrap caption-w-1 pe_none z_100 tl_md tl">
+                  <div class="pa_txts mb_h_pos3 mb_v_pos85 h_pos3 v_pos50 caption">
+                     <div class="bottom_top"><div id="b_f4bef414-7d3b-4e5e-a292-4db4b0557dbd" class="slt4_txt mg__0 lh__1 f_body">會員儲分賺回贈</div><div id="b_90b8ed35-699f-4242-be8c-42c1061cbfe8" class="slt4_space"></div><div id="b_f9013bf8-196e-4117-8a2b-c30d06d6020f" class="slt4_txt mg__0 lh__1 f_heading">Pets Dollar「現金回贈」</div><div id="b_aeee9098-fea9-40a8-af2a-cf4ae062ac38" class="slt4_space"></div><a id="b_6fd1a28c-43e0-4eca-b6ad-c109cf7b72a1" class="slt4_btn button pe_auto round_ btn_icon_false btn_w_false" href="/pages/pet-dollars-petsthing-reward-system" target="_self">立即註冊會員</a></div>
+                  </div> 
+                 </div>
+                 <a href="/pages/pet-dollars-petsthing-reward-system" target="_self" class="pa t__0 l__0 b__0 r__0"></a>
+               </div>
+            </div></div>
+</div><style data-shopify>.nt_se_template--15766304227564__16357021760efbe511 {margin-top: 0 !important;margin-right: auto !important;margin-bottom: 25px !important;margin-left: auto !important;}</style>
+<style data-shopify>.nt_se_template--15766304227564__16357021760efbe511 .img_slider_block{padding-top:250px}@media (min-width: 768px) { .nt_se_template--15766304227564__16357021760efbe511 .img_slider_block{padding-top:500px} }
+                @media (min-width: 1025px) { .nt_se_template--15766304227564__16357021760efbe511 .img_slider_block{padding-top:700px} }#nt_efbcd4f5-7366-4386-986c-b50e2588aaea .nt_img_txt>a:after{ background-color: #000000;opacity: 0.0 }#b_479b5f2e-82c4-4cc4-9443-6d2a3f967622 { line-height:1;font-size: 16px;font-weight: 500;color: #ffffff;margin-bottom:5px }@media (min-width: 768px) {#b_479b5f2e-82c4-4cc4-9443-6d2a3f967622 { line-height:1;font-size: 24px;margin-bottom:5px}}#b_426077b2-6d12-4eda-9c3d-72fbd02d2ed2 {height: 5px}@media (min-width: 768px) {#b_426077b2-6d12-4eda-9c3d-72fbd02d2ed2 { height:10px} }#b_19bfb644-3273-4969-ab91-ef8c4c25c096 { line-height:1;font-size: 28px;font-weight: 600;color: #ffffff;margin-bottom:10px }@media (min-width: 768px) {#b_19bfb644-3273-4969-ab91-ef8c4c25c096 { line-height:1;font-size: 60px;margin-bottom:10px}}#b_c20f93b2-885d-4c54-a704-1e7a2375c823 {height: 5px}@media (min-width: 768px) {#b_c20f93b2-885d-4c54-a704-1e7a2375c823 { height:10px} }#b_516e24b9-7146-4a0c-9ea6-2f7b11689ab6{ margin-bottom:0px;padding-left:15px;padding-right:15px;border-radius:100px;min-height:40px;font-size: 14px;color: #ffffff;background-color: #daad6c;border-color: #daad6c }#b_516e24b9-7146-4a0c-9ea6-2f7b11689ab6.btn_icon_true:after {color: #ffffff }
+              @media (min-width: 768px) {#b_516e24b9-7146-4a0c-9ea6-2f7b11689ab6 { margin-bottom:0px;padding-left:15px;padding-right:15px;border-radius:100px;font-weight: 400;min-height:40px;font-size: 18px }}#nt_54f499e9-6701-4a9f-85ff-39200a5cb5cb .nt_img_txt>a:after{ background-color: #000000;opacity: 0.0 }#b_f4bef414-7d3b-4e5e-a292-4db4b0557dbd { line-height:1;font-size: 16px;font-weight: 500;color: #ffffff;margin-bottom:5px }@media (min-width: 768px) {#b_f4bef414-7d3b-4e5e-a292-4db4b0557dbd { line-height:1;font-size: 24px;margin-bottom:5px}}#b_90b8ed35-699f-4242-be8c-42c1061cbfe8 {height: 5px}@media (min-width: 768px) {#b_90b8ed35-699f-4242-be8c-42c1061cbfe8 { height:10px} }#b_f9013bf8-196e-4117-8a2b-c30d06d6020f { line-height:1;font-size: 28px;font-weight: 600;color: #ffffff;margin-bottom:10px }@media (min-width: 768px) {#b_f9013bf8-196e-4117-8a2b-c30d06d6020f { line-height:1;font-size: 60px;margin-bottom:10px}}#b_aeee9098-fea9-40a8-af2a-cf4ae062ac38 {height: 5px}@media (min-width: 768px) {#b_aeee9098-fea9-40a8-af2a-cf4ae062ac38 { height:10px} }#b_6fd1a28c-43e0-4eca-b6ad-c109cf7b72a1{ margin-bottom:0px;padding-left:15px;padding-right:15px;border-radius:100px;min-height:40px;font-size: 14px;color: #ffffff;background-color: #daad6c;border-color: #daad6c }#b_6fd1a28c-43e0-4eca-b6ad-c109cf7b72a1.btn_icon_true:after {color: #ffffff }
+              @media (min-width: 768px) {#b_6fd1a28c-43e0-4eca-b6ad-c109cf7b72a1 { margin-bottom:0px;padding-left:15px;padding-right:15px;border-radius:100px;font-weight: 400;min-height:40px;font-size: 18px }}</style></div><div id="shopify-section-template--15766304227564__236514ae-1579-4b6b-b477-db7f97046d8b" class="shopify-section"> 
+ 
+            
+            
+        <link rel="stylesheet" id="ecom-vendors-css_ecomposer_base" href="https://cdn.ecomposer.app/vendors/css/ecom-base.css?v=1.2" />
+<link href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/ecom-637da8e7b9c972c9ad04d70e.css?v=22328324171706763941669179626" rel="stylesheet" type="text/css" media="all" />
+<script type="text/javascript" id="ecom-page-info">
+                    window.EComposer = window.EComposer || {};
+                    window.EComposer.TEMPLATE_ID="637da8e7b9c972c9ad04d70e";
+                    window.EComposer.SECTION = {"template_id":"637da8e7b9c972c9ad04d70e","title":"collection-pet-stroller","type":"section","slug":"ecom-collection-pet-stroller","plan_id":2};
+            </script>
+<div class="ecom-builder" id="ecom-collection-pet-stroller"><div class="ecom-sections"><section class="ecom-row ecom-core ecom-section ecom-mbok014qauf" data-id="ecom-mbok014qauf" style="z-index: inherit;"><div data-deep="1" class="core__row--columns"><div class="ecom-column ecom-core core__column--first core__column--last ecom-k5t8q2ikv7j"><div class="core__column--wrapper"><div class="core__blocks" index="0"><div class="core__blocks--body"><div class="ecom-block ecom-core core__block elmspace ecom-cj46wi2ps2t" data-core-is="block"><div deep="1"><div class="ecom-masonry-layout ecom-row ecom-no-gutters hoverz_true" data-ecom-packery-params="{ &quot;itemSelector&quot;: &quot;.ecom-masonry-layout__item&quot;, &quot;layoutMode&quot;: &quot;packery&quot;, &quot;percentPosition&quot; : true}"><div v-key="0" class="ecom-masonry-layout__item ecom-col-lg-12 ecom-col-12"><div class="ecom-masonry__banner_hzoom ecom-masonry__nt_promotion ecom-image-default"><!----><a href="https://petsthing.com.hk/collections/dog-walk-time-travel-strollers" class="ecom-masonry-layout__picture-link"><img src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-promotion-pet-stroller.jpg?v=1669179590" alt="petsthing-promotion-pet-stroller" class="ecom-masonry-layout__picture" loading="lazy"></a><div class="ecom-masonry__nt_promotion_html ecom-t__0 ecom-l__0 ecom-r__0 ecom-b__0 ecom-flex ecom-w__100" style="align-items: flex-end;"><div class="ecom-masonry-layout_wrap_html_block ecom-flex ecom-column"><!----><!----><!----><!----></div></div></div></div></div></div><!----><!----></div></div></div></div></div></div><div class="ecom-section__overlay"><!----><!----><div class="ecom-overlay"></div></div><!----></section><!---This page has been built by EComposer Builder (www.ecomposer.io)--->
+</div></div><script  type="text/javascript" id="ecom-vendors-packery_js" src="https://cdn.ecomposer.app/vendors/js/packery.min.js" ></script>
+<script src="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/ecom-637da8e7b9c972c9ad04d70e.js?v=70553485177280239861669179625" defer="defer"></script>
+
+</div><div id="shopify-section-template--15766304227564__16475923847211e716" class="shopify-section nt_section type_tab type_tab_collection tp_se_cdt"><style data-shopify>.nt_se_template--15766304227564__16475923847211e716 {margin-top: 50px !important;margin-right: auto !important;margin-bottom: 50px !important;margin-left: auto !important;}@media only screen and (max-width: 767px) {		.nt_se_template--15766304227564__16475923847211e716 {margin-top: 0 !important;margin-right: auto !important;margin-bottom: 20px !important;margin-left: auto !important;}	}</style><div class="nt_se_template--15766304227564__16475923847211e716 container"><div class="wrap_title  des_title_11">
+		<h3 class="section-title tc pr flex fl_center al_center fs__24 title_11"><span class="mr__10 ml__10">香港寵物車．寵物手推車</span></h3>
+		<span class="dn tt_divider"><span></span><i class="dn clprfalse title_11 la-gem"></i><span></span></span><span class="section-subtitle db tc sub-title"></span>
+		</div><div class="tab_se_wrap"><div class="tab_se_header tc mt__30">
+        <ul class="tab_cat_title ul_none des_tab_7"><li class="dib" ><a data-no-instant class=" js_t4_tab tt_active" data-id="template--15766304227564__16475923847211e716" data-bid="16475923843276b47b-0" href="/collections/bello"><span>Bello</span></a></li><li class="dib" ><a data-no-instant class=" js_t4_tab" data-id="template--15766304227564__16475923847211e716" data-bid="16475923843276b47b-1" href="/collections/dodopet"><span>DODOPET</span></a></li><li class="dib" ><a data-no-instant class=" js_t4_tab" data-id="template--15766304227564__16475923847211e716" data-bid="16475923843276b47b-2" href="/collections/ibiyaya"><span>Ibiyaya</span></a></li><li class="dib" ><a data-no-instant class=" js_t4_tab" data-id="template--15766304227564__16475923847211e716" data-bid="cd23298e-0364-4068-a95c-b737dc5f3c65" href="/collections/ivpets-stroller"><span>IVPETS</span></a></li></ul>
+      </div><div class="tab_se_content"><div class="tab_se_element tab__16475923843276b47b-0 ct_active" id="16475923843276b47b-0"><div class="products nt_products_holder row fl_center row_pr_1 cdt_des_1 round_cd_false nt_cover ratio_nt position_8 space_30"><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/bello/products/strollers-dogs-bello-british-style-detachable-high-seat-stroller"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-strollers-dogs-bello-british-style-high-seat-stroller-khaki_600x.jpg?v=1654922054" alt="Bello 英倫尊寵號可摺疊可分拆寵物手推車（寵物承重：15kg）-狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/bello/products/strollers-dogs-bello-british-style-detachable-high-seat-stroller">Bello 英倫尊寵號可摺疊可分拆寵物手推車（寵物承重：15kg）</a></h3>
+         <span class="price dib mb__5"><del>$1,689.00</del><ins>$1,399.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="7661298778348"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/bello/products/strollers-dogs-bello-detachable-omni-directional-wheel-stroller-large-grey"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-strollers-dogs-bello-detachable-omni-directional-wheel-stroller-large-grey-01_600x.jpg?v=1645080757" alt="【加大版】Bello 車籃分拆款 四輪萬向可摺狗狗手推車(亞麻灰色)(寵物承重：17kg)-狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/bello/products/strollers-dogs-bello-detachable-omni-directional-wheel-stroller-large-grey">【加大版】Bello 車籃分拆款 四輪萬向可摺狗狗手推車(亞麻灰色)(寵物承重：17kg)</a></h3>
+         <span class="price dib mb__5"><del>$1,429.00</del><ins>$1,199.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="6950788694193"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/bello/products/strollers-dogs-bello-classic-four-wheels-stroller-blue"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-trollers-dogs-bello-classic-four-wheels-stroller-blue-a_600x.jpg?v=1645079353" alt="Bello 經典版四輪 可摺疊狗狗手推車(深藍色)（寵物承重：15kg）-狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/bello/products/strollers-dogs-bello-classic-four-wheels-stroller-blue">Bello 經典版四輪 可摺疊狗狗手推車(深藍色)（寵物承重：15kg）</a></h3>
+         <span class="price dib mb__5"><del>$829.00</del><ins>$749.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="6584539971761"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/bello/products/strollers-dogs-bello-detachable-omni-directional-wheel-stroller-linen-grey"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-strollers-dogs-bello-detachable-omni-directional-wheel-stroller-linen-grey-00_600x.jpg?v=1645080229" alt="Bello 車籃分拆款 四輪萬向可摺狗狗手推車(亞麻灰)（寵物承重：12kg）-狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/bello/products/strollers-dogs-bello-detachable-omni-directional-wheel-stroller-linen-grey">Bello 車籃分拆款 四輪萬向可摺狗狗手推車(亞麻灰)（寵物承重：12kg）</a></h3>
+         <span class="price dib mb__5"><del>$1,029.00</del><ins>$879.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="6747488256177"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/bello/products/strollers-dogs-bello-trendy-30kg-weight-capacity-four-wheel-stroller-blue"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-strollers-dogs-bello-trendy-30kg-weight-capacity-four-wheel-stroller-blue-a_600x.jpg?v=1645080185" alt="Bello 時尚版可摺疊狗狗手推車(深藍色)（30kg承重）-狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/bello/products/strollers-dogs-bello-trendy-30kg-weight-capacity-four-wheel-stroller-blue">Bello 時尚版可摺疊狗狗手推車(深藍色)（30kg承重）</a></h3>
+         <span class="price dib mb__5"><del>$1,689.00</del><ins>$1,499.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="6735382085809"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/bello/products/strollers-dogs-bello-trendy-omni-directional-wheel-stroller-grey"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-strollers-dogs-bello-trendy-omni-directional-wheel-stroller-grey-a_600x.jpg?v=1645080176" alt="Bello 時尚版四輪萬向 可摺疊狗狗手推車(亞麻灰色)（寵物承重：12kg）-狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/bello/products/strollers-dogs-bello-trendy-omni-directional-wheel-stroller-grey">Bello 時尚版四輪萬向 可摺疊狗狗手推車(亞麻灰色)（寵物承重：12kg）</a></h3>
+         <span class="price dib mb__5"><del>$959.00</del><ins>$869.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="6735359967409"></div></div>
+   </div>
+</div></div><div class="products-footer tc mt__40"><a class="pr button view_more js_add_loading button_primary br_rd_true btn_icon_false" href="/collections/bello">查看更多</a></div></div><div data-set4url='/?section_id=template--15766304227564__16475923847211e716' data-t4splitlz class="tab_se_element tab__16475923843276b47b-0" id="16475923843276b47b-0" data-rendert4s="/collections/bello/0_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div><div data-set4url='/?section_id=template--15766304227564__16475923847211e716' data-t4splitlz class="tab_se_element tab__16475923843276b47b-1" id="16475923843276b47b-1" data-rendert4s="/collections/dodopet/1_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div><div data-set4url='/?section_id=template--15766304227564__16475923847211e716' data-t4splitlz class="tab_se_element tab__16475923843276b47b-2" id="16475923843276b47b-2" data-rendert4s="/collections/ibiyaya/2_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div><div data-set4url='/?section_id=template--15766304227564__16475923847211e716' data-t4splitlz class="tab_se_element tab__cd23298e-0364-4068-a95c-b737dc5f3c65" id="cd23298e-0364-4068-a95c-b737dc5f3c65" data-rendert4s="/collections/ivpets-stroller/3_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div></div>
+    </div></div></div><div id="shopify-section-template--15766304227564__44a49528-13ab-48c1-9eaa-c247190f231a" class="shopify-section"> 
+ 
+            
+            
+        <link rel="stylesheet" id="ecom-vendors-css_ecomposer_base" href="https://cdn.ecomposer.app/vendors/css/ecom-base.css?v=1.2" />
+<link href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/ecom-637da7edb601946d3d01eaf7.css?v=167877238532663839731669384310" rel="stylesheet" type="text/css" media="all" />
+<script type="text/javascript" id="ecom-page-info">
+                    window.EComposer = window.EComposer || {};
+                    window.EComposer.TEMPLATE_ID="637da7edb601946d3d01eaf7";
+                    window.EComposer.SECTION = {"template_id":"637da7edb601946d3d01eaf7","title":"collection-all","type":"section","slug":"ecom-collection-all","plan_id":2};
+            </script>
+<div class="ecom-builder" id="ecom-collection-all"><div class="ecom-sections"><section class="ecom-row ecom-core ecom-section ecom-t6mx7ysos9" data-id="ecom-t6mx7ysos9" style="z-index: inherit;"><div data-deep="1" class="core__row--columns"><div class="ecom-column ecom-core core__column--first core__column--last ecom-f86d2c4ujfh"><div class="core__column--wrapper"><div class="core__blocks" index="0"><div class="core__blocks--body"><div class="ecom-block ecom-core core__block elmspace ecom-7zfufhyhhvp" data-core-is="block"><div deep="1"><div class="ecom-masonry-layout ecom-row ecom-no-gutters hoverz_true" data-ecom-packery-params="{ &quot;itemSelector&quot;: &quot;.ecom-masonry-layout__item&quot;, &quot;layoutMode&quot;: &quot;packery&quot;, &quot;percentPosition&quot; : true}"><div v-key="0" class="ecom-masonry-layout__item ecom-col-lg-6 ecom-col-12"><div class="ecom-masonry__banner_hzoom ecom-masonry__nt_promotion ecom-image-default"><!----><a href="https://petsthing.com.hk/collections/cat-lifestyle-climbers" class="ecom-masonry-layout__picture-link"><img src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-promotion-cat-tree.jpg?v=1669179259" alt="petsthing-promotion-cat-tree" class="ecom-masonry-layout__picture" loading="lazy"></a><div class="ecom-masonry__nt_promotion_html ecom-t__0 ecom-l__0 ecom-r__0 ecom-b__0 ecom-flex ecom-w__100" style="align-items: flex-end;"><div class="ecom-masonry-layout_wrap_html_block ecom-flex ecom-column"><!----><!----><!----><!----></div></div></div></div><div v-key="1" class="ecom-masonry-layout__item ecom-col-lg-6 ecom-col-12"><div class="ecom-masonry__banner_hzoom ecom-masonry__nt_promotion ecom-image-default"><!----><a href="https://petsthing.com.hk/collections/dog-steps-sofa-bed" class="ecom-masonry-layout__picture-link"><img src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-promotion-dog-stairs.jpg?v=1669179309" alt="petsthing-promotion-dog-stairs" class="ecom-masonry-layout__picture" loading="lazy"></a><div class="ecom-masonry__nt_promotion_html ecom-t__0 ecom-l__0 ecom-r__0 ecom-b__0 ecom-flex ecom-w__100" style="align-items: flex-end;"><div class="ecom-masonry-layout_wrap_html_block ecom-flex ecom-column"><h3 class="ecom-masonry-layout__heading"><br></h3><!----><!----><!----></div></div></div></div><div v-key="2" class="ecom-masonry-layout__item ecom-col-lg-6 ecom-col-12"><div class="ecom-masonry__banner_hzoom ecom-masonry__nt_promotion ecom-image-default"><!----><a href="https://petsthing.com.hk/collections/pet-friendly-design-furniture" class="ecom-masonry-layout__picture-link"><img src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-promotion-pet-furniture.jpg?v=1669179349" alt="petsthing-promotion-pet-furniture" class="ecom-masonry-layout__picture" loading="lazy"></a><div class="ecom-masonry__nt_promotion_html ecom-t__0 ecom-l__0 ecom-r__0 ecom-b__0 ecom-flex ecom-w__100" style="align-items: flex-end;"><div class="ecom-masonry-layout_wrap_html_block ecom-flex ecom-column"><h3 class="ecom-masonry-layout__heading"><br></h3><!----><!----><!----></div></div></div></div></div></div><!----><!----></div></div></div></div></div></div><div class="ecom-section__overlay"><!----><!----><div class="ecom-overlay"></div></div><!----></section><!---This page has been built by EComposer Builder (www.ecomposer.io)--->
+</div></div><script  type="text/javascript" id="ecom-vendors-packery_js" src="https://cdn.ecomposer.app/vendors/js/packery.min.js" ></script>
+<script src="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/ecom-637da7edb601946d3d01eaf7.js?v=33799047703422218051669384309" defer="defer"></script>
+
+</div><div id="shopify-section-template--15766304227564__16475909504aade967" class="shopify-section nt_section type_tab type_tab_collection tp_se_cdt"><style data-shopify>.nt_se_template--15766304227564__16475909504aade967 {margin-top: 50px !important;margin-right: auto !important;margin-bottom: 50px !important;margin-left: auto !important;}@media only screen and (max-width: 767px) {		.nt_se_template--15766304227564__16475909504aade967 {margin-top: 0 !important;margin-right: auto !important;margin-bottom: 20px !important;margin-left: auto !important;}	}</style><div class="nt_se_template--15766304227564__16475909504aade967 container"><div class="wrap_title  des_title_11">
+		<h3 class="section-title tc pr flex fl_center al_center fs__24 title_11"><span class="mr__10 ml__10">貓狗熱門推介</span></h3>
+		<span class="dn tt_divider"><span></span><i class="dn clprfalse title_11 la-gem"></i><span></span></span><span class="section-subtitle db tc sub-title"></span>
+		</div><div class="tab_se_wrap"><div class="tab_se_header tc mt__30">
+        <ul class="tab_cat_title ul_none des_tab_7"><li class="dib" ><a data-no-instant class=" js_t4_tab tt_active" data-id="template--15766304227564__16475909504aade967" data-bid="1647590950492077fd-0" href="/collections/cat-lifestyle-climbers"><span>貓爬架．貓樹</span></a></li><li class="dib" ><a data-no-instant class=" js_t4_tab" data-id="template--15766304227564__16475909504aade967" data-bid="1647590950492077fd-1" href="/collections/dog-steps-sofa-bed"><span>狗狗樓梯</span></a></li><li class="dib" ><a data-no-instant class=" js_t4_tab" data-id="template--15766304227564__16475909504aade967" data-bid="5134828e-de66-44d2-aae9-22423f6ef535" href="/collections/cat-pole-floor-to-ceiling-cat-tree"><span>頂天立地爬架</span></a></li><li class="dib" ><a data-no-instant class=" js_t4_tab" data-id="template--15766304227564__16475909504aade967" data-bid="4c016a57-327f-4da3-897b-86a1da6fdf4e" href="/collections/pet-friendly-design-furniture"><span>人寵共用傢俬</span></a></li></ul>
+      </div><div class="tab_se_content"><div class="tab_se_element tab__1647590950492077fd-0 ct_active" id="1647590950492077fd-0"><div class="products nt_products_holder row fl_center row_pr_1 cdt_des_1 round_cd_false nt_cover ratio_nt position_8 space_30"><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-lifestyle-climbers/products/climbers-cats-sopet-pet-summer-rattan-weaving-style-cat-climber-tree-158cm"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-climbers-cats-SOPET-pet-summer-rattan-weaving-style-cat-climber-tree-158cm-a_600x.jpg?v=1645080488" alt="夏天清涼麻布邊仿藤麻繩抓柱貓爬架 (升級8層款｜158cm)-貓-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-lifestyle-climbers/products/climbers-cats-sopet-pet-summer-rattan-weaving-style-cat-climber-tree-158cm">夏天清涼麻布邊仿藤麻繩抓柱貓爬架 (升級8層款｜158cm)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $1,399.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="6839026679985"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-lifestyle-climbers/products/petsthing-climbers-cats-fankec-pet-cat-climber-tomato"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-climbers-cats-fankec-pet-cat-climber-tomato_600x.jpg?v=1645080675" alt="趣味一體式貓抓柱貓爬架跳台(蕃茄款)-貓-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-lifestyle-climbers/products/petsthing-climbers-cats-fankec-pet-cat-climber-tomato">趣味一體式貓抓柱貓爬架跳台(蕃茄款)</a></h3>
+         <span class="price dib mb__5"><del>$319.00</del><ins>$279.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="6891610734769"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-lifestyle-climbers/products/climbers-cats-hoopet-pet-blue-sky-style-cat-climber-tree-155cm"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-climbers-cats-hoopet-pet-blue-sky-style-cat-climber-tree-155cm_8993360e-e68f-4174-b827-e33fc13fc9bf_600x.jpg?v=1648707606" alt="藍天夢幻劍麻貓爬架貓爬柱貓窩 (7層款｜155cm)-貓爬架-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-lifestyle-climbers/products/climbers-cats-hoopet-pet-blue-sky-style-cat-climber-tree-155cm">藍天夢幻劍麻貓爬架貓爬柱貓窩 (7層款｜155cm)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $899.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="7576377360620"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-lifestyle-climbers/products/climbers-cats-sjm-pet-norway-style-cat-climber-tree-130cm"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-climbers-cats-sjm-pet-norway-style-cat-climber-tree-130cm_600x.jpg?v=1648794140" alt="挪威風多貓大型劍麻貓抓柱貓別墅跳台 (大型6層款｜130cm)-貓-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-lifestyle-climbers/products/climbers-cats-sjm-pet-norway-style-cat-climber-tree-130cm">挪威風多貓大型劍麻貓抓柱貓別墅跳台 (大型6層款｜130cm)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $1,259.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="7579278311660"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-lifestyle-climbers/products/climbers-cats-beauty-cat-spaceship-cat-climber-tree-142cm"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-climbers-cats-beauty-cat-spaceship-cat-climber-tree-142cm_23de9be1-be0b-43d1-ac12-64d732d5e8e8_600x.jpg?v=1648794102" alt="粉粉宇宙劍麻貓跳台貓爬架貓窩版 (6層款｜142cm)-貓爬架-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-lifestyle-climbers/products/climbers-cats-beauty-cat-spaceship-cat-climber-tree-142cm">粉粉宇宙劍麻貓跳台貓爬架貓窩版 (6層款｜142cm)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $929.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="7578346094828"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-lifestyle-climbers/products/climbers-cats-sjm-pet-norway-style-cat-climber-tree-4levels"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-climbers-cats-sjm-pet-norway-style-cat-climber-tree-4levels_600x.jpg?v=1648794117" alt="挪威風劍麻貓抓柱跳台貓樹 (普通4層款｜89cm)-貓-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-lifestyle-climbers/products/climbers-cats-sjm-pet-norway-style-cat-climber-tree-4levels">挪威風劍麻貓抓柱跳台貓樹 (普通4層款｜89cm)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $999.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="7579274707180"></div></div>
+   </div>
+</div></div><div class="products-footer tc mt__40"><a class="pr button view_more js_add_loading button_primary br_rd_true btn_icon_false" href="/collections/cat-lifestyle-climbers">查看更多</a></div></div><div data-set4url='/?section_id=template--15766304227564__16475909504aade967' data-t4splitlz class="tab_se_element tab__1647590950492077fd-0" id="1647590950492077fd-0" data-rendert4s="/collections/cat-lifestyle-climbers/0_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div><div data-set4url='/?section_id=template--15766304227564__16475909504aade967' data-t4splitlz class="tab_se_element tab__1647590950492077fd-1" id="1647590950492077fd-1" data-rendert4s="/collections/dog-steps-sofa-bed/1_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div><div data-set4url='/?section_id=template--15766304227564__16475909504aade967' data-t4splitlz class="tab_se_element tab__5134828e-de66-44d2-aae9-22423f6ef535" id="5134828e-de66-44d2-aae9-22423f6ef535" data-rendert4s="/collections/cat-pole-floor-to-ceiling-cat-tree/2_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div><div data-set4url='/?section_id=template--15766304227564__16475909504aade967' data-t4splitlz class="tab_se_element tab__4c016a57-327f-4da3-897b-86a1da6fdf4e" id="4c016a57-327f-4da3-897b-86a1da6fdf4e" data-rendert4s="/collections/pet-friendly-design-furniture/3_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div></div>
+    </div></div></div><div id="shopify-section-template--15766304227564__2f8f05cd-5670-4979-894e-6c9e68dfd728" class="shopify-section"> 
+ 
+            
+            
+        <link rel="stylesheet" id="ecom-vendors-css_ecomposer_base" href="https://cdn.ecomposer.app/vendors/css/ecom-base.css?v=1.2" />
+<link href="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/ecom-637f372cd42a7ca4e3036f52.css?v=89777016634498597781669281827" rel="stylesheet" type="text/css" media="all" />
+<script type="text/javascript" id="ecom-page-info">
+                    window.EComposer = window.EComposer || {};
+                    window.EComposer.TEMPLATE_ID="637f372cd42a7ca4e3036f52";
+                    window.EComposer.SECTION = {"template_id":"637f372cd42a7ca4e3036f52","title":"collection-all-2","type":"section","slug":"ecom-collection-all-2","plan_id":2};
+            </script>
+<div class="ecom-builder" id="ecom-collection-all-2"><div class="ecom-sections"><section class="ecom-row ecom-core ecom-section ecom-94o49hs723" data-id="ecom-94o49hs723" style="z-index: inherit;"><div data-deep="1" class="core__row--columns"><div class="ecom-column ecom-core core__column--first core__column--last ecom-papai64e3v"><div class="core__column--wrapper"><div class="core__blocks" index="0"><div class="core__blocks--body"><div class="ecom-block ecom-core core__block elmspace ecom-e4ovotvwpmt" data-core-is="block"><div deep="1"><div class="ecom-masonry-layout ecom-row ecom-no-gutters hoverz_true" data-ecom-packery-params="{ &quot;itemSelector&quot;: &quot;.ecom-masonry-layout__item&quot;, &quot;layoutMode&quot;: &quot;packery&quot;, &quot;percentPosition&quot; : true}"><div v-key="0" class="ecom-masonry-layout__item ecom-col-lg-6 ecom-col-12"><div class="ecom-masonry__banner_hzoom ecom-masonry__nt_promotion ecom-image-default"><!----><a href="https://petsthing.com.hk/collections/pet-test" class="ecom-masonry-layout__picture-link"><img src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-promotion-pet-dna-test.jpg?v=1669281209" alt="petsthing-promotion-pet-dna-test" class="ecom-masonry-layout__picture" loading="lazy"></a><div class="ecom-masonry__nt_promotion_html ecom-t__0 ecom-l__0 ecom-r__0 ecom-b__0 ecom-flex ecom-w__100" style="align-items: flex-end;"><div class="ecom-masonry-layout_wrap_html_block ecom-flex ecom-column"><!----><!----><!----><!----></div></div></div></div><div v-key="1" class="ecom-masonry-layout__item ecom-col-lg-6 ecom-col-12"><div class="ecom-masonry__banner_hzoom ecom-masonry__nt_promotion ecom-image-default"><!----><a href="https://petsthing.com.hk/collections/dog-walk-time-travel-bag-carriers" class="ecom-masonry-layout__picture-link"><img src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-promotion-pet-carrier.jpg?v=1669281410" alt="petsthing-promotion-pet-carrier" class="ecom-masonry-layout__picture" loading="lazy"></a><div class="ecom-masonry__nt_promotion_html ecom-t__0 ecom-l__0 ecom-r__0 ecom-b__0 ecom-flex ecom-w__100" style="align-items: flex-end;"><div class="ecom-masonry-layout_wrap_html_block ecom-flex ecom-column"><h3 class="ecom-masonry-layout__heading"><br></h3><!----><!----><!----></div></div></div></div><div v-key="2" class="ecom-masonry-layout__item ecom-col-lg-6 ecom-col-12"><div class="ecom-masonry__banner_hzoom ecom-masonry__nt_promotion ecom-image-default"><!----><a href="https://petsthing.com.hk/collections/cat-walk-time-backpack-carriers" class="ecom-masonry-layout__picture-link"><img src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-promotion-cat-backpack.jpg?v=1669281449" alt="petsthing-promotion-cat-backpack" class="ecom-masonry-layout__picture" loading="lazy"></a><div class="ecom-masonry__nt_promotion_html ecom-t__0 ecom-l__0 ecom-r__0 ecom-b__0 ecom-flex ecom-w__100" style="align-items: flex-end;"><div class="ecom-masonry-layout_wrap_html_block ecom-flex ecom-column"><h3 class="ecom-masonry-layout__heading"><br></h3><!----><!----><!----></div></div></div></div></div></div><!----><!----></div></div></div></div></div></div><div class="ecom-section__overlay"><!----><!----><div class="ecom-overlay"></div></div><!----></section><!---This page has been built by EComposer Builder (www.ecomposer.io)--->
+</div></div><script  type="text/javascript" id="ecom-vendors-packery_js" src="https://cdn.ecomposer.app/vendors/js/packery.min.js" ></script>
+<script src="//cdn.shopify.com/s/files/1/0550/5853/0481/t/5/assets/ecom-637f372cd42a7ca4e3036f52.js?v=43827754427698846911669281826" defer="defer"></script>
+
+</div><div id="shopify-section-template--15766304227564__1654251321bf0ecc0c" class="shopify-section nt_section type_featured_collection tp_se_cdt"><style data-shopify>.nt_se_template--15766304227564__1654251321bf0ecc0c {margin-top: 50px !important;margin-right: auto !important;margin-bottom: 50px !important;margin-left: auto !important;}@media only screen and (max-width: 767px) {		.nt_se_template--15766304227564__1654251321bf0ecc0c {margin-top: 0 !important;margin-right: auto !important;margin-bottom: 20px !important;margin-left: auto !important;}	}</style><div class="nt_se_template--15766304227564__1654251321bf0ecc0c container"><div class="wrap_title  des_title_11">
+		<h3 class="section-title tc pr flex fl_center al_center fs__24 title_11"><span class="mr__10 ml__10">預知寵物健康系列</span></h3>
+		<span class="dn tt_divider"><span></span><i class="dn clprfalse title_11 la-gem"></i><span></span></span><span class="section-subtitle db tc sub-title"></span>
+		</div><div class="products nt_products_holder row fl_center row_pr_1 cdt_des_1 round_cd_false nt_cover ratio_nt position_8 space_30"><div data-page="" class="col-lg-4 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/pet-test/products/lucky-pet-pet-dna-test-for-cats-dogs"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-pet-dna-test-for-cats-dogs-01_600x.jpg?v=1654266703" alt="LUCKY PET 寵物(貓狗)基因檢測盒 Pet DNA Test for Cats &amp; Dogs-寵物基因檢測-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/pet-test/products/lucky-pet-pet-dna-test-for-cats-dogs">LUCKY PET 寵物(貓狗)基因檢測盒 Pet DNA Test for Cats & Dogs</a></h3>
+         <span class="price dib mb__5"><del>$3,768.00</del><ins>$2,968.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="7652375429356"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-4 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/pet-test/products/lucky-pet-dog-allergy-test"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-pet-allergy-test-01_600x.jpg?v=1660285160" alt="LUCKY PET 寵物(貓狗)致敏原測試 Pet Allergy Test-寵物致敏原檢測-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/pet-test/products/lucky-pet-dog-allergy-test">LUCKY PET 寵物(貓狗)致敏原測試 Pet Allergy Test</a></h3>
+         <span class="price dib mb__5"><del>$3,668.00</del><ins>$2,968.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="7652478681324"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-4 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/pet-test/products/lucky-pet-pet-dna-test-for-cats-dogs-with-dog-allergy-test"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-lucky-pet_02978dce-3994-4947-be12-f34e70f3273d_600x.jpg?v=1660285167" alt="LUCKY PET 寵物(貓狗)基因檢測盒 ＋ 寵物(狗貓)致敏原測試-寵物檢測-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/pet-test/products/lucky-pet-pet-dna-test-for-cats-dogs-with-dog-allergy-test">LUCKY PET 寵物(貓狗)基因檢測盒 ＋ 寵物(狗貓)致敏原測試</a></h3>
+         <span class="price dib mb__5"><del>$7,536.00</del><ins>$4,968.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="7656175730924"></div></div>
+   </div>
+</div></div></div>
+</div><div id="shopify-section-template--15766304227564__1647591691734887c9" class="shopify-section nt_section type_tab type_tab_collection tp_se_cdt"><style data-shopify>.nt_se_template--15766304227564__1647591691734887c9 {margin-top: 50px !important;margin-right: auto !important;margin-bottom: 50px !important;margin-left: auto !important;}@media only screen and (max-width: 767px) {		.nt_se_template--15766304227564__1647591691734887c9 {margin-top: 0 !important;margin-right: auto !important;margin-bottom: 20px !important;margin-left: auto !important;}	}</style><div class="nt_se_template--15766304227564__1647591691734887c9 container"><div class="wrap_title  des_title_11">
+		<h3 class="section-title tc pr flex fl_center al_center fs__24 title_11"><span class="mr__10 ml__10">香港寵物箱．飛機籠</span></h3>
+		<span class="dn tt_divider"><span></span><i class="dn clprfalse title_11 la-gem"></i><span></span></span><span class="section-subtitle db tc sub-title"></span>
+		</div><div class="tab_se_wrap"><div class="tab_se_header tc mt__30">
+        <ul class="tab_cat_title ul_none des_tab_7"><li class="dib" ><a data-no-instant class=" js_t4_tab tt_active" data-id="template--15766304227564__1647591691734887c9" data-bid="1647591690a494a41e-1" href="/collections/iris"><span>日本IRIS</span></a></li><li class="dib" ><a data-no-instant class=" js_t4_tab" data-id="template--15766304227564__1647591691734887c9" data-bid="1647591690a494a41e-2" href="/collections/petmate"><span>美國Petmate</span></a></li><li class="dib" ><a data-no-instant class=" js_t4_tab" data-id="template--15766304227564__1647591691734887c9" data-bid="1647591690a494a41e-0" href="/collections/hoopet-iata-travel-carrier"><span>Hoopet</span></a></li><li class="dib" ><a data-no-instant class=" js_t4_tab" data-id="template--15766304227564__1647591691734887c9" data-bid="c83dc03e-223e-4671-bd59-60b0b13442e4" href="/collections/dog-lifestyle-watering-supplies"><span>飲水器</span></a></li></ul>
+      </div><div class="tab_se_content"><div class="tab_se_element tab__1647591690a494a41e-1 ct_active" id="1647591690a494a41e-1"><div class="products nt_products_holder row fl_center row_pr_1 cdt_des_1 round_cd_false nt_cover ratio_nt position_8 space_30"><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/iris/products/carriers-pet-iris-atc-460-white-grey-airplane-approved-pet-carrier"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-carriers-pet-iris-atc-460-white-grey-org_600x.jpg?v=1645080102" alt="IRIS ATC-460寵物航空飛機籠(白/灰)(貓、小型犬適用~5kg)-貓狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/iris/products/carriers-pet-iris-atc-460-white-grey-airplane-approved-pet-carrier">IRIS ATC-460寵物航空飛機籠(白/灰)(貓、小型犬適用~5kg)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $589.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="6693497766065"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/iris/products/carriers-pet-iris-atc-530-white-matcha-airplane-approved-pet-carrier"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-carriers-pet-iris-atc-530-white-matcha-org_600x.jpg?v=1645080108" alt="IRIS ATC-530寵物航空飛機籠(白/抹茶)(小型犬適用~12kg)-貓狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/iris/products/carriers-pet-iris-atc-530-white-matcha-airplane-approved-pet-carrier">IRIS ATC-530寵物航空飛機籠(白/抹茶)(小型犬適用~12kg)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $759.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="6693503828145"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/iris/products/carriers-pet-iris-atc-530-black-purple-airplane-approved-pet-carrier"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-carriers-pet-iris-atc-530-black-purple_600x.jpg?v=1645079977" alt="IRIS ATC-530寵物航空飛機籠(紫/黑)(小型犬適用~12kg)-貓狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/iris/products/carriers-pet-iris-atc-530-black-purple-airplane-approved-pet-carrier">IRIS ATC-530寵物航空飛機籠(紫/黑)(小型犬適用~12kg)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $759.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="6656850886833"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/iris/products/carriers-pet-iris-atc-530-white-purple-airplane-approved-pet-carrier"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-carriers-pet-iris-atc-530-white-purple_27d6c671-da4f-4069-bd0e-d8641e1dc308_600x.jpg?v=1645079989" alt="IRIS ATC-530寵物航空飛機籠(白/紫)(小型犬適用~12kg)-貓狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/iris/products/carriers-pet-iris-atc-530-white-purple-airplane-approved-pet-carrier">IRIS ATC-530寵物航空飛機籠(白/紫)(小型犬適用~12kg)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $759.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="6656866255025"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/iris/products/carriers-pet-iris-atc-670-white-blue-airplane-approved-pet-carrier"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-carriers-pet-iris-atc-670-white-blue_600x.jpg?v=1645080002" alt="IRIS ATC-670寵物航空飛機籠(白/藍)(中型犬適用~20kg)-貓狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/iris/products/carriers-pet-iris-atc-670-white-blue-airplane-approved-pet-carrier">IRIS ATC-670寵物航空飛機籠(白/藍)(中型犬適用~20kg)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $899.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="6656872349873"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/iris/products/carriers-pet-iris-atc-870-white-red-airplane-approved-pet-carrier"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-carriers-pet-iris-atc-870-white-red-org_600x.jpg?v=1645080127" alt="IRIS ATC-870寵物航空飛機籠(白/紅)(大型犬適用~35kg)-貓狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/iris/products/carriers-pet-iris-atc-870-white-red-airplane-approved-pet-carrier">IRIS ATC-870寵物航空飛機籠(白/紅)(大型犬適用~35kg)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $1,579.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="6693520572593"></div></div>
+   </div>
+</div></div><div class="products-footer tc mt__40"><a class="pr button view_more js_add_loading button_primary br_rd_true btn_icon_false" href="/collections/iris">查看更多</a></div></div><div data-set4url='/?section_id=template--15766304227564__1647591691734887c9' data-t4splitlz class="tab_se_element tab__1647591690a494a41e-1" id="1647591690a494a41e-1" data-rendert4s="/collections/iris/0_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div><div data-set4url='/?section_id=template--15766304227564__1647591691734887c9' data-t4splitlz class="tab_se_element tab__1647591690a494a41e-2" id="1647591690a494a41e-2" data-rendert4s="/collections/petmate/1_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div><div data-set4url='/?section_id=template--15766304227564__1647591691734887c9' data-t4splitlz class="tab_se_element tab__1647591690a494a41e-0" id="1647591690a494a41e-0" data-rendert4s="/collections/hoopet-iata-travel-carrier/2_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div><div data-set4url='/?section_id=template--15766304227564__1647591691734887c9' data-t4splitlz class="tab_se_element tab__c83dc03e-223e-4671-bd59-60b0b13442e4" id="c83dc03e-223e-4671-bd59-60b0b13442e4" data-rendert4s="/collections/dog-lifestyle-watering-supplies/3_bid+ntt4tag"><div class="lds_bginfinity pr mt__50 mb__100"></div></div></div>
+    </div></div></div><div id="shopify-section-template--15766304227564__1638904362937e3d4e" class="shopify-section nt_section type_featured_collection tp_se_cdt"><style data-shopify>.nt_se_template--15766304227564__1638904362937e3d4e {margin-top: 50px !important;margin-right: auto !important;margin-bottom: 50px !important;margin-left: auto !important;}@media only screen and (max-width: 767px) {		.nt_se_template--15766304227564__1638904362937e3d4e {margin-top: 0 !important;margin-right: auto !important;margin-bottom: 20px !important;margin-left: auto !important;}	}</style><div class="nt_se_template--15766304227564__1638904362937e3d4e container"><div class="wrap_title  des_title_11">
+		<h3 class="section-title tc pr flex fl_center al_center fs__24 title_11"><span class="mr__10 ml__10">貓貓背囊</span></h3>
+		<span class="dn tt_divider"><span></span><i class="dn clprfalse title_11 la-gem"></i><span></span></span><span class="section-subtitle db tc"></span>
+		</div><div class="products nt_products_holder row fl_center row_pr_1 cdt_des_1 round_cd_false nt_cover ratio_nt position_8 space_30"><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-weiliya-pet-backpack-vangogh"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-backpack-cats-weiliya-pet-backpack-vangogh_600x.jpg?v=1645079154" alt="🎒貓咪太空艙保暖透氣背囊(星月貓夜)-貓-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-weiliya-pet-backpack-vangogh">🎒貓咪太空艙保暖透氣背囊(星月貓夜)</a></h3>
+         <span class="price dib mb__5"><del>$368.00</del><ins>$299.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="6573311393969"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-dodopet-pet-tiny-trendy-backpack"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-backpack-cats-dodopet-pet-tiny-trendy-backpack-khaki_600x.jpg?v=1655965256" alt="DODOPET寵物貓咪半隱秘通風可摺疊背囊 (普通版)-貓-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-dodopet-pet-tiny-trendy-backpack">DODOPET寵物貓咪半隱秘通風可摺疊背囊 (普通版)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $579.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="7674709246188"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-walk-time-backpack-carriers/products/strollers-dodopet-four-wheels-backpack-stroller-grey"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-strollers-dodopet-four-wheels-backpack-stroller-grey-org_600x.jpg?v=1645080376" alt="DODOPET 寵物兩用背囊手拉車 四輪360度轉動(灰色) (寵物承重：10kg)-貓狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-walk-time-backpack-carriers/products/strollers-dodopet-four-wheels-backpack-stroller-grey">DODOPET 寵物兩用背囊手拉車 四輪360度轉動(灰色) (寵物承重：10kg)</a></h3>
+         <span class="price dib mb__5"><del>$879.00</del><ins>$789.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="6807687987377"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-weiliya-pet-backpack-night"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-backpack-cats-weiliya-pet-backpack-night_600x.jpg?v=1645079170" alt="🎒貓咪太空艙保暖透氣背囊(黑色森林)-貓-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-weiliya-pet-backpack-night">🎒貓咪太空艙保暖透氣背囊(黑色森林)</a></h3>
+         <span class="price dib mb__5"><del>$368.00</del><ins>$299.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="6573323354289"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-dodopet-pet-2022-trendy-backpack"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-backpack-cats-dodopet-pet-2022-trendy-backpack-grey_600x.jpg?v=1669655406" alt="DODOPET全方位通風透氣貓狗挺身寵物背囊 (普通版)-貓狗-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-dodopet-pet-2022-trendy-backpack">DODOPET全方位通風透氣貓狗挺身寵物背囊 (普通版)</a></h3>
+         <span class="price dib mb__5"><span class="cb fwn">特價低至</span> $669.00
+</span><div class="shopify-product-reviews-badge star-rating" data-id="7831210557676"></div></div>
+   </div>
+</div><div data-page="" class="col-lg-2 col-md-4 col-6 pr_animated done mt__30 pr_grid_item product nt_pr desgin__1">
+   <div class="product-inner pr"><div class="product-image pr oh lazyloadt4s" data-set4url="/?section_id=main-imgfalse" data-rendert4s="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-dodopet-pet-tiny-trendy-backpack-tent"><noscript><img class="pr_lazy_img main-img nt_img_ratio" loading="lazy" src="//cdn.shopify.com/s/files/1/0550/5853/0481/products/petsthing-backpack-cats-dodopet-pet-tiny-trendy-backpack-upgrade-khaki_b88bd5b8-564d-49ea-ac19-c85d379dee8e_600x.jpg?v=1655965272" alt="DODOPET寵物貓咪半隱秘通風可摺疊背囊 (升級可擴展移動帳篷版)-貓-毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹"></noscript><div class="nt_bg_lz nt_fk_lz" style="padding-top:100.0%;"></div></div><div class="product-info mt__15"><h3 class="product-title pr fs__14 mg__0 fwm"><a class="cd chp" href="/collections/cat-walk-time-backpack-carriers/products/backpack-cats-dodopet-pet-tiny-trendy-backpack-tent">DODOPET寵物貓咪半隱秘通風可摺疊背囊 (升級可擴展移動帳篷版)</a></h3>
+         <span class="price dib mb__5"><del>$769.00</del><ins>$599.00</ins></span><div class="shopify-product-reviews-badge star-rating" data-id="7674717765868"></div></div>
+   </div>
+</div></div><div class="products-footer tc mt__40"><a class="pr button view_more js_add_loading button_default br_rd_true btn_icon_false" href="/collections/cat-walk-time-backpack-carriers">查看更多</a></div></div>
+</div><div id="shopify-section-template--15766304227564__1581508031759" class="shopify-section nt_section type_featured_blog type_carousel"><style data-shopify>#shopify-section-template--15766304227564__1581508031759 {background-color: #f7f7f7 !important;}.nt_se_template--15766304227564__1581508031759 {padding-top: 60px !important;padding-right: 10px !important;padding-bottom: 60px !important;padding-left: 10px !important;}@media only screen and (max-width: 767px) {		.nt_se_template--15766304227564__1581508031759 {padding-top: 30px !important;padding-right: 10px !important;padding-bottom: 30px !important;padding-left: 10px !important;}	}</style><div class="nt_se_template--15766304227564__1581508031759 container"><div class="wrap_title mb__30 des_title_11">
+		<h3 class="section-title tc pr flex fl_center al_center fs__24 title_11"><span class="mr__10 ml__10">最新資訊</span></h3>
+		<span class="dn tt_divider"><span></span><i class="dn clprfalse title_11 la-pencil-alt"></i><span></span></span><span class="section-subtitle db tc"></span>
+		</div><div class="articles art_des1 nt_products_holder row nt_cover ratio16_9 position_8 equal_nt"><article class="post-588562956524 post_nt_loop post_1 col-lg-4 col-md-4 col-6 pr_animated done mb__40"> 
+   <a class="mb__15 db pr oh" href="/blogs/news/tips-for-first-new-cat-owners"><div class="lazyloadt4s nt_bg_lz pr_lazy_img" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/articles/tips-for-first-new-cat-owners_1x1.jpg?v=1678330145" data-ratio="1.910828025477707" data-sizes="auto"></div></a>
+   <div class="post-info mb__10">
+      <h4 class="mg__0 fs__16 mb__5 ls__0"><a class="cd chp open" href="/blogs/news/tips-for-first-new-cat-owners">【貓奴必讀・養貓須知】有關在香港養貓的5件事｜養貓貼士常見問題</a></h4><span class="post-time">在 <span class="cd"><time datetime="2023-03-09T00:19:40Z">2023年3月9日</time></span></span></div><div class="post-content">貓咪是全球最受歡迎的寵物之一，因為牠們可愛、親密且是好的伴侶。然而，養貓也有其責任與注意事項，包括餵食、美容、健康和安全。在這篇文章中，我們將提供一些讓貓咪快樂、健康且安全的貼士。
+
+
+</div><a href="/blogs/news/tips-for-first-new-cat-owners" class="post-readmore dib mt__5">查看更多</a></article><article class="post-588370837740 post_nt_loop post_1 col-lg-4 col-md-4 col-6 pr_animated done mb__40"> 
+   <a class="mb__15 db pr oh" href="/blogs/news/5-things-you-must-know-about-cat-climbers-scratcher-before-choosing"><div class="lazyloadt4s nt_bg_lz pr_lazy_img" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/articles/5-things-you-must-know-about-cat-climbers-scratcher-before-choosing-cover_1x1.jpg?v=1673269539" data-ratio="1.910828025477707" data-sizes="auto"></div></a>
+   <div class="post-info mb__10">
+      <h4 class="mg__0 fs__16 mb__5 ls__0"><a class="cd chp open" href="/blogs/news/5-things-you-must-know-about-cat-climbers-scratcher-before-choosing">【貓奴必讀‧貓樹抓板須知】有關貓樹貓爬架跳台的5件事｜貓爬架要放哪裡？</a></h4><span class="post-time">在 <span class="cd"><time datetime="2023-01-09T13:05:41Z">2023年1月9日</time></span></span></div><div class="post-content">有養貓的你必然知道，貓咪最喜歡的活動就是到處抓抓碰碰，家中的不少傢俬都難免會留下貓爪的痕跡，因此不少家中都要設置貓樹、貓爬架等設備，讓貓咪可以放鬆一下。但是大家又知不知道為甚麼貓咪會有這個習性呢？又如何根據貓貓的習性去選購爬架以及設置放置的位置？</div><a href="/blogs/news/5-things-you-must-know-about-cat-climbers-scratcher-before-choosing" class="post-readmore dib mt__5">查看更多</a></article><article class="post-588206932204 post_nt_loop post_1 col-lg-4 col-md-4 col-6 pr_animated done mb__40"> 
+   <a class="mb__15 db pr oh" href="/blogs/news/2022-how-to-choose-pet-christmas-gift"><div class="lazyloadt4s nt_bg_lz pr_lazy_img" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/articles/petsthing-how-to-choose-pet-christmas-gift-1200x628_1x1.jpg?v=1667576702" data-ratio="1.910828025477707" data-sizes="auto"></div></a>
+   <div class="post-info mb__10">
+      <h4 class="mg__0 fs__16 mb__5 ls__0"><a class="cd chp open" href="/blogs/news/2022-how-to-choose-pet-christmas-gift">【2022寵物聖誕禮物・貓狗過聖誕】2022年度寵物聖誕禮物推介？寵物都有聖誕禮物收？</a></h4><span class="post-time">在 <span class="cd"><time datetime="2022-11-04T15:45:04Z">2022年11月4日</time></span></span></div><div class="post-content">聖誕寵物收禮物？毛孩過聖誕有咩精明之選
+2022 年度推介4類寵物聖誕禮品，給毛孩一個幸福聖誕！
+在忙著挑選聖誕禮物給親朋好友的同時，都不可以忽略家中的主子寵物們。
+雖然主子寵物們對於節日毫無概念，但其實單是牠們收到禮物之後，興奮...</div><a href="/blogs/news/2022-how-to-choose-pet-christmas-gift" class="post-readmore dib mt__5">查看更多</a></article><article class="post-587998134508 post_nt_loop post_1 col-lg-4 col-md-4 col-6 pr_animated done mb__40"> 
+   <a class="mb__15 db pr oh" href="/blogs/news/how-to-make-cat-drink-more-water-in-hong-kong"><div class="lazyloadt4s nt_bg_lz pr_lazy_img" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/articles/petsthing-how-to-make-cat-drink-more-water-1200x628_1x1.jpg?v=1663660103" data-ratio="1.910828025477707" data-sizes="auto"></div></a>
+   <div class="post-info mb__10">
+      <h4 class="mg__0 fs__16 mb__5 ls__0"><a class="cd chp open" href="/blogs/news/how-to-make-cat-drink-more-water-in-hong-kong">【2023年貓咪飲水攻略】貓咪不喜歡喝水？7個令貓貓飲水嘅方法</a></h4><span class="post-time">在 <span class="cd"><time datetime="2022-09-20T07:48:22Z">2022年9月20日</time></span></span></div><div class="post-content">要預防貓貓腎臟問題？貓貓飲水有方法 多數貓咪都不愛飲水。貓奴們知道貓應該飲幾多水先夠嗎？寵主們又可以怎樣誘導貓主子多飲水呢？
+
+
+</div><a href="/blogs/news/how-to-make-cat-drink-more-water-in-hong-kong" class="post-readmore dib mt__5">查看更多</a></article><article class="post-587717181676 post_nt_loop post_1 col-lg-4 col-md-4 col-6 pr_animated done mb__40"> 
+   <a class="mb__15 db pr oh" href="/blogs/news/how-to-prevent-dog-heatstroke-in-summer"><div class="lazyloadt4s nt_bg_lz pr_lazy_img" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/articles/petsthing-dog-prevent-heatstroke-1200x628_1x1.jpg?v=1657768897" data-ratio="1.910828025477707" data-sizes="auto"></div></a>
+   <div class="post-info mb__10">
+      <h4 class="mg__0 fs__16 mb__5 ls__0"><a class="cd chp open" href="/blogs/news/how-to-prevent-dog-heatstroke-in-summer">【2023年狗狗的夏天】天氣太熱狗狗會中暑？7個讓狗狗夏天過涼快暑假的方法</a></h4><span class="post-time">在 <span class="cd"><time datetime="2022-07-14T03:21:39Z">2022年7月14日</time></span></span></div><div class="post-content">我們怎麼才知道狗狗很熱呢？又如何能防止狗狗中暑呢？讓我們舉出7個可以幫狗狗消暑／預防毛孩中暑的方法。</div><a href="/blogs/news/how-to-prevent-dog-heatstroke-in-summer" class="post-readmore dib mt__5">查看更多</a></article><article class="post-587623497964 post_nt_loop post_1 col-lg-4 col-md-4 col-6 pr_animated done mb__40"> 
+   <a class="mb__15 db pr oh" href="/blogs/news/2022-hk-2nd-consumption-voucher"><div class="lazyloadt4s nt_bg_lz pr_lazy_img" data-bgset="//cdn.shopify.com/s/files/1/0550/5853/0481/articles/petsthing-10000-consumption-voucher-2nd-1200x628_1x1.jpg?v=1655362507" data-ratio="1.910828025477707" data-sizes="auto"></div></a>
+   <div class="post-info mb__10">
+      <h4 class="mg__0 fs__16 mb__5 ls__0"><a class="cd chp open" href="/blogs/news/2022-hk-2nd-consumption-voucher">【$10000消費券攻略】2022年新二輪電子消費券期限、使用方法、限制（轉領取平台6月23日登記）</a></h4><span class="post-time">在 <span class="cd"><time datetime="2022-06-16T06:55:09Z">2022年6月16日</time></span></span></div><div class="post-content">第二期消費券終於有消息了！財政司司長陳茂波於6月13日舉行記者會，公布今年第二階段消費券計劃的詳情。</div><a href="/blogs/news/2022-hk-2nd-consumption-voucher" class="post-readmore dib mt__5">查看更多</a></article></div><div class="products-footer tc mt__40"><a class="se_cat_lm pr nt_cat_lm button button_default br_rd_true btn_icon_false" data-id=template--15766304227564__1581508031759 data-get='/blogs/news/?page=2' href="/blogs/news">載入更多</a></div></div>
+</div>
+
+</div>
+    <footer id="nt_footer" class="bgbl footer-1"><div id="shopify-section-footer_top" class="shopify-section footer__top type_instagram"><div class="footer__top_wrap footer_sticky_false footer_collapse_true nt_bg_overlay pr oh pb__30 pt__80" >
+   <div class="container pr z_100">
+      <div class="row"><div class="col-lg-4 col-md-6 col-12 mb__50 order-lg-1 order-1" ><aside id="block_1581507819652" class="widget widget_text widget_logo"><h3 class="widget-title fwsb flex al_center fl_between fs__16 mg__0 mb__30"><span class="txt_title">聯絡我們</span><span class="nav_link_icon ml__5"></span></h3><div class="textwidget widget_footer tl_md tl">
+		                  <div class="footer-contact"><p><i class="pegk pe-7s-mail"></i><span> <a href="mailto:contact@petsthing.com.hk">contact@petsthing.com.hk</a></span></p><p><i class="pegk pe-7s-call"></i> <span><a class="cg" href="https://wa.me/85295841597">+852 9584 1597
+ (WhatsApp)</a></span></p><div class="nt-social border_ black_"><a data-no-instant rel="noopener noreferrer nofollow" href="https://www.facebook.com/petsthinghk" target="_blank" class="facebook cb ttip_nt tooltip_top"><span class="tt_txt">追蹤Facebook</span><i class="facl facl-facebook"></i></a><a data-no-instant rel="noopener noreferrer nofollow" href="https://www.instagram.com/petsthinghk/" target="_blank" class="instagram cb ttip_nt tooltip_top"><span class="tt_txt">追蹤Instagram</span><i class="facl facl-instagram"></i></a><a data-no-instant rel="noopener noreferrer nofollow" href="https://www.youtube.com/channel/UCxOsn7ibVYheQojZQRer7dA" target="_blank" class="youtube cb ttip_nt tooltip_top"><span class="tt_txt">追蹤Youtube</span><i class="facl facl-youtube-play"></i></a></div>
+
+</div>
+		               </div>
+		            </aside></div><div class="col-lg-4 col-md-6 col-12 mb__50 order-lg-2 order-1" ><aside id="block_1581507824602" class="widget widget_nav_menu"><h3 class="widget-title fwsb flex al_center fl_between fs__16 mg__0 mb__30"><span class="txt_title">網店資訊</span><span class="nav_link_icon ml__5"></span></h3><div class="menu_footer widget_footer"><ul class="menu"><li class="menu-item"><a href="/pages/promotion">最新優惠</a></li><li class="menu-item"><a href="/pages/pet-dollars-petsthing-reward-system">Pet Dollars 積分會藉</a></li><li class="menu-item"><a href="/pages/petsthing-referral-program">朋友推薦計劃</a></li><li class="menu-item"><a href="/pages/contact">聯絡我們</a></li><li class="menu-item"><a href="/pages/installation-services">產品組裝服務</a></li><li class="menu-item"><a href="/pages/payment-methods">付款方法</a></li><li class="menu-item"><a href="/policies/terms-of-service">服務條款</a></li><li class="menu-item"><a href="/policies/refund-policy">退款政策</a></li><li class="menu-item"><a href="/pages/merchant">商戶加盟</a></li><li class="menu-item"><a href="https://petsthing.com.hk/pages/affiliate-programs">聯盟計劃</a></li></ul></div>
+		            </aside></div><div class="col-lg-4 col-md-6 col-12 mb__50 order-lg-3 order-1" ><aside id="block_1581507835369" class="widget widget_text"><h3 class="widget-title fwsb flex al_center fl_between fs__16 mg__0 mb__30"><span class="txt_title">訂閱我們</span><span class="nav_link_icon ml__5"></span></h3><div class="textwidget widget_footer newl_des_1">
+		                  <p>訂閱我們，即享首單5%折扣。</p><form method="post" action="/contact#contact_form" id="contact_form" accept-charset="UTF-8" class="js_mail_agree mc4wp-form pr z_100"><input type="hidden" name="form_type" value="customer" /><input type="hidden" name="utf8" value="✓" /><input type="hidden" name="contact[tags]" value="newsletter">
+        <div class="mc4wp-form-fields">
+           <div class="signup-newsletter-form row no-gutters pr oh ">
+              <div class="col col_email"><input type="email" name="contact[email]" placeholder="您的電郵地址"  value="" class="tc tl_md input-text" required="required"></div>
+              <div class="col-auto"><button type="submit" class="btn_new_icon_false w__100 submit-btn truncate mail_agree pr"><span>訂閱</span></button></div>
+           </div><div></div><p class="agree_checkbox agree_mail pr dib mt__15">
+	<input type="checkbox" id="new_check_agree_" name="new_check_agree_" class="css_agree_ck mr__5" required="required">
+	<label for="new_check_agree_">我已經閱讀並同意毛孩物語之網上購物條款及細則與私隱政策。</label>
+	<svg class="dn scl_selected"><use xlink:href="#scl_selected"></use></svg>
+</p></div>
+         <div class="mc4wp-response"></div></form><style>.payment_footer_svg img {padding: 2.5px;height: 30px;}</style>
+					            <p class="mt__20 payment_footer_svg"><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/visa-319d545c6fd255c9aad5eeaad21fd6f7f7b4fdbdb1a35ce83b89cca12a187f00.svg" alt="visa" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/master-173035bc8124581983d4efa50cf8626e8553c2b311353fbf67485f9c1a2b88d1.svg" alt="master" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/american_express-2264c9b8b57b23b0b0831827e90cd7bcda2836adc42a912ebedf545dead35b20.svg" alt="american express" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/apple_pay-f6db0077dc7c325b436ecbdcf254239100b35b70b1663bc7523d7c424901fa09.svg" alt="apple pay" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/google_pay-c66a29c63facf2053bf69352982c958e9675cabea4f2f7ccec08d169d1856b31.svg" alt="google pay" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/alipay_hk-d0e8325d855b0b78e7377ad25344fd710ab0e211dd9fa759ff1beb3076f21c58.svg" alt="alipay hk" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/wechatpay-dd2bf2476057628209c6b0142cd8cc7a4b5af17bd02af04fba67326a8838056f.svg" alt="wechatpay" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/unionpay-8aedb760a6bde56bc2e3bbfd40bc008f1b0967a9f5863ecfbe855d54bde81ea6.svg" alt="unionpay" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/payme-534eded9f52cf4a14428409a809293b5b95475374c3f85c95e943590262a22b1.svg" alt="payme" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/fps-38615d4d8a5964e6985aa9fbf523b8e689fcd5a0af9a052f99ea36d6db2ba7cb.svg" alt="fps" /><img class="lazyloadt4s" src="https://cdn.shopify.com/s/assets/payment_icons/generic-dfdcaf09b6731ca14dd7441354c0ad8bc934184eb15ae1fda6a6b9e307675485.svg" data-src="//cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/paypal-49e4c1e03244b6d2de0d270ca0d22dd15da6e92cc7266e93eb43762df5aa355d.svg" alt="paypal" /><img class=" lazyloadt4sed" src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/logo_atome_footer.svg?v=1646643360" data-src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/logo_atome_footer.svg?v=1646643360" alt="atome">         
+                           <img class=" lazyloadt4sed" src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/logo_octopus_fotter.svg?v=1646643360" data-src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/logo_octopus_fotter.svg?v=1646643360" alt="octopus">
+                                  <img class=" lazyloadt4sed" src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/tag_go.png?v=1653141085" data-src="https://cdn.shopify.com/s/files/1/0550/5853/0481/files/tag_go.png?v=1653141085" alt="tagandgo">  
+                      </p></div>
+		            </aside></div></div>
+   </div>
+</div><style data-shopify>.footer__top a:hover{color: #ffd597}.footer__top .signup-newsletter-form,.footer__top .signup-newsletter-form input.input-text {background-color: transparent;}.footer__top .signup-newsletter-form input.input-text {color: #ffffff }.footer__top .signup-newsletter-form .submit-btn {color:#daad6c;background-color: #ffffff }.footer__top .widget-title { color: #6a3906 }.footer__top a:not(:hover) { color: #ffffff }.footer__top .signup-newsletter-form,.footer__top .signup-newsletter-form input.input-text{ border-color: #ffffff }.footer__top .nt_bg_overlay:after{ background-color: #000000;opacity: 0.0 }.footer__top_wrap {background-color: #daad6c;background-repeat: no-repeat;background-size: cover;background-attachment: scroll;background-position: center center;color:#ffffff }</style></div><div id="shopify-section-footer_bot" class="shopify-section footer__bot"> <div class="footer__bot_wrap pt__20 pb__20">
+   <div class="container pr tc">
+      <div class="row"><div class="col-lg-6 col-md-12 col-12 col_1 f_bot_bt_menu"><ul id="footer-menu" class="clearfix"><li class="menu-item"><a href="/pages/about-us">關於我們</a></li><li class="menu-item"><a href="/pages/payment-methods">付款方法</a></li><li class="menu-item"><a href="/policies/shipping-policy">送貨服務</a></li><li class="menu-item"><a href="/policies/terms-of-service">服務條款</a></li><li class="menu-item"><a href="/pages/installation-services">組裝服務</a></li><li class="menu-item"><a href="/policies/refund-policy">退換政策</a></li><li class="menu-item"><a href="/pages/merchant">商戶加盟</a></li><li class="menu-item"><a href="/pages/affiliate-programs">聯盟計劃</a></li></ul></div><div class="col-lg-6 col-md-12 col-12 col_2 f_bot_bt_copy">© 2023 <a href="https://petsthing.com.hk/">毛孩物語Pets Thing香港寵物用品專門店</a>｜由 <a href="https://petsthing.com.hk/">毛孩物語Pets Thing</a> 提供技術支援</div></div>
+   </div>
+</div><style data-shopify>.footer__bot_wrap a:hover,.footer__bot_wrap a.selected:not(:hover){color: #ffd597}.footer__bot_wrap,.footer__bot .nt_currency ul,.footer__bot .nt_currency.cg {background-color: #daad6c;color:#ffffff}.footer__bot a:not(:hover) { color: #ffffff }</style></div><!--<script type="text/javascript">
+    (function(e,t,o,n,p,r,i){e.visitorGlobalObjectAlias=n;e[e.visitorGlobalObjectAlias]=e[e.visitorGlobalObjectAlias]||function(){(e[e.visitorGlobalObjectAlias].q=e[e.visitorGlobalObjectAlias].q||[]).push(arguments)};e[e.visitorGlobalObjectAlias].l=(new Date).getTime();r=t.createElement("script");r.src=o;r.async=true;i=t.getElementsByTagName("script")[0];i.parentNode.insertBefore(r,i)})(window,document,"https://diffuser-cdn.app-us1.com/diffuser/diffuser.js","vgo");
+    vgo('setAccount', '651654245');
+    vgo('setTrackByDefault', true);
+
+    vgo('process');
+</script>-->
+    </footer>
+  </div><script type="application/ld+json">{"@context": "http://schema.org","@type": "Organization","name": "毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹","logo": "https:\/\/cdn.shopify.com\/s\/files\/1\/0550\/5853\/0481\/files\/PetsThing-logo-1000x1000_d8eefa71-c818-426a-ab22-8ca9a57ab9bd_1000x.jpg?v=1668576013","sameAs": ["","https:\/\/www.facebook.com\/petsthinghk","","","https:\/\/www.instagram.com\/petsthinghk\/","","https:\/\/www.youtube.com\/channel\/UCxOsn7ibVYheQojZQRer7dA","","",""],"url": "https://petsthing.com.hk/","address": {"@type": "PostalAddress","streetAddress": "King Yip Factory Building, 59 King Yip Street,, Unit C, 6/F., King Yip Factory Building,","addressLocality": "Kwun Tong","addressRegion": "九龍","postalCode": "","addressCountry": "中國香港特別行政區"},"contactPoint": [{ "@type": "ContactPoint","telephone": "95841597","contactType": "customer service"}] }</script><script type="application/ld+json">{"@context": "http://schema.org","@type": "WebSite","name": "毛孩物語Pets Thing｜香港寵物貓狗用品專門店：IATA寵物飛機籠、寵物手推車、貓爬架貓樹","potentialAction": {"@type": "SearchAction","target": "https:\/\/petsthing.com.hk\/search?q={search_term_string}","query-input": "required name=search_term_string"},"url": "https://petsthing.com.hk/" }</script><a id="nt_backtop" class="pf br__50 z__100 des_bt1" href="/"><span class="tc br__50 db cw"><i class="pr pegk pe-7s-angle-up"></i></span></a>
+<div id="order_day" class="dn">order_dayNames</div><div id="order_mth" class="dn">order_monthNames</div><div id="js_we_stcl" class="dn">唔好意思，這件產品暫時只有 [max] 件存貨。 </div><a rel="nofollow" id="wis_ntjs" class="dn" data-get='/search' href="/search/?view=wish"><span class="txt_add">加入我的清單</span><span class="txt_view">瀏覽我的清單</span><span class="txt_remve">清除</span></a><div class="pswp pswp_t4_js dn pswp_tp_light" tabindex="-1" role="dialog" aria-hidden="true"><div class="pswp__bg"></div><div class="pswp__scroll-wrap"><div class="pswp__container"> <div class="pswp__item"></div><div class="pswp__item"></div><div class="pswp__item"></div></div><div class="pswp__ui pswp__ui--hidden"> <div class="pswp__top-bar"> <div class="pswp__counter"></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button> <button class="pswp__button pswp__button--share" title="Share"></button> <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button> <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button> <div class="pswp__preloader"> <div class="pswp__preloader__icn"> <div class="pswp__preloader__cut"> <div class="pswp__preloader__donut"></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"> <div class="pswp__share-tooltip"></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"> </button> <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"> </button> <div class="pswp__caption"> <div class="pswp__caption__center"></div></div></div></div><div class="pswp__thumbnails"></div></div>
+<div class="mask-overlay ntpf t__0 r__0 l__0 b__0 op__0 pe_none"></div><div id="shopify-section-cart_widget" class="shopify-section"><div id="nt_cart_canvas" class="nt_fk_canvas dn">
+   <form action="/checkout" method="post" novalidate class="nt_mini_cart nt_js_cart flex column h__100 btns_cart_1">
+      <input type="hidden" data-cart-attr-rm name="attributes[cat_mb_items_per_row]" value=""><input type="hidden" data-cart-attr-rm name="attributes[cat_tb_items_per_row]" value=""><input type="hidden" data-cart-attr-rm name="attributes[cat_dk_items_per_row]" value="">
+      <input type="hidden" data-cart-attr-rm name="attributes[auto_hide_ofsock]" value=""><input type="hidden" data-cart-attr-rm name="attributes[paginate_ntt4]" value=""><input type="hidden" data-cart-attr-rm name="attributes[limit_ntt4]" value=""><input type="hidden" data-cart-attr-rm name="attributes[use_bar_lmntt4]" value="">
+      <div class="mini_cart_header flex fl_between al_center"><div class="h3 widget-title tu fs__16 mg__0">我的購物車</div><i class="close_pp pegk pe-7s-close ts__03 cd"></i></div><div class="mini_cart_wrap">
+         <div class="mini_cart_content fixcl-scroll">
+            <div class="fixcl-scroll-content">
+               <div class="empty tc mt__40"><i class="las la-shopping-bag pr mb__10"></i><p>購物車暫時沒有產品</p><p class="return-to-shop mb__15"><a class="button button_primary tu js_add_ld" href="/collections/all"><span class="truncate">返回商店</span></a></p></div>
+               <div class="cookie-message dn"></div><div class="mini_cart_items js_cat_items" data-rendert4s="/cart/?view=viewjs"><div class="lds_bginfinity pr mt__10 mb__20"></div></div><div class="mini_cart_tool js_cart_tool tc  dn"><div data-id="note" class="mini_cart_tool_note js_cart_tls ttip_nt tooltip_top">
+                    <span class="txt_add_note "><i class="lar la-clipboard"></i><span class="tt_txt">備註</span></span>
+                    <span class="txt_edit_note dn"><i class="las la-clipboard-list"></i><span class="tt_txt">訂單摘要</span></span></div><div data-id="dis" class="mini_cart_tool_dis js_cart_tls ttip_nt tooltip_top"><i class="las la-tag"></i><span class="tt_txt">加入新的優惠碼</span></div></div><div data-cart-upsell-js data-baseurl="/recommendations/products" data-limit="10" data-id=""></div></div>
+         </div>
+         <div class="mini_cart_footer js_cart_footer dn">
+            <div class="js_cat_dics"></div><div class="total row fl_between al_center">
+                        <div class="col-auto"><strong>小計</strong></div>
+                        <div class="col-auto tr js_cat_ttprice"><div class="cart_tot_price">$0.00</div>
+                        </div>
+                     </div><p class="pr db mb__5 fs__12"><input type="checkbox" id="cart_agree" class="js_agree_ck mr__5" name="ck_lumise"><label for="cart_agree">我同意本網站條款及細則。
+</label><svg class="dn scl_selected"><use xlink:href="#scl_selected"/></svg></p><a href="/cart" class="button btn-cart tc mt__10 mb__10 js_add_ld"><span class="truncate">購物車完整頁面</span></a><button type="submit" data-confirm="ck_lumise" name="checkout" class="button btn-checkout mt__10 mb__10 js_add_ld truncate">結帳</button><div data-agree-ckt4><div data-add-ckt4 class="additional_checkout_buttons additional-checkout-buttons--vertical mt__10 mb__10 pe_none"><div class="dynamic-checkout__content" id="dynamic-checkout-cart" data-shopify="dynamic-checkout-cart"></div></div></div><div class="cat_img_trust mt__10"><img class="w__100 lz_op_ef lazyloadt4s" src="data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%201200%20628%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3C%2Fsvg%3E" data-src="//cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-pet-dollar-1200x628_{width}x.jpg?v=1662424768" data-widths="[180, 360, 480, 600]" data-sizes="auto" alt=""></div></div>
+      </div><div class="mini_cart_note pe_none">             
+         <label for="CartSpecialInstructions" class="mb__5 dib"><span class="txt_add_note ">備註</span><span class="txt_edit_note dn">訂單摘要</span></label>
+         <textarea name="note" id="CartSpecialInstructions" placeholder="可填寫此欄給作運送提醒或備註"></textarea>
+         <input type="button" class="button btn_back js_cart_tls_back mt__15 mb__10" value="儲存並兌換" />
+         <input type="button" class="button btn_back btn_back2 js_cart_tls_back" value="取消">
+      </div><div class="mini_cart_dis pe_none">
+        <div class="shipping_calculator">
+         <h3>加入新的優惠碼</h3>
+         <p>輸入優惠碼，以獲得折扣</p>
+         <p class="field">
+           <input type="text" name="discount" id="Cartdiscode" value placeholder="請輸入優惠碼">
+         </p>
+         <p class="field">
+           <input type="button" class="button btn_back js_cart_save js_cart_tls_back" value="儲存並兌換" />
+         </p>
+         <input type="button" class="button btn_back btn_back2 js_cart_tls_back" value="取消">
+       </div>
+      </div></form>
+</div></div><div id="nt_menu_canvas" class="nt_fk_canvas nt_sleft dn lazyloadt4s" data-rendert4s="/search/?view=mn"></div>
+<i class="close_pp pegk pe-7s-close ts__03 cd close_mn_t4 ntpf op__0 pe_none"></i><div id="sp_notices_wrapper"></div><form method="post" action="/localization" id="CurrencyLangSelector" accept-charset="UTF-8" class="hide hidden dn" enctype="multipart/form-data"><input type="hidden" name="form_type" value="localization" /><input type="hidden" name="utf8" value="✓" /><input type="hidden" name="_method" value="put" /><input type="hidden" name="return_to" value="/" /><input type="hidden" name="locale_code" id="LocaleSelector" value="zh-TW" data-disclosure-input/></form><div id="nt_login_canvas" class="nt_fk_canvas dn lazyloadt4s" data-rendert4s="/cart/?view=login"><div class="lds_bginfinity pr"></div></div><div id="nt_search_canvas" class="nt_fk_canvas dn" data-rendert4s="/search?q=&view=pp"></div><div id="shopify-section-toolbar_mobile" class="shopify-section"><div class="kalles_toolbar kalles_toolbar_label_true ntpf r__0 l__0 b__0 flex fl_between al_center"><div class="type_toolbar_link type_toolbar_6c3074ae-35d7-461d-8bc8-0482812f62b0 kalles_toolbar_item">
+        <a href="https://wa.me/85295841597"><img class="lazyloadt4s lz_op_ef" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="//cdn.shopify.com/s/files/1/0550/5853/0481/files/001-whatsapp_22cb2522-47e0-43df-bccc-dd172ab66b9c_x40.png?v=1662035193" alt=""></i><span class="kalles_toolbar_label">WhatsApp</span></a>
+      </div><div class="type_toolbar_link type_toolbar_95c1dddb-1739-4118-b470-b9935f1b10e1 kalles_toolbar_item">
+        <a href="/pages/promotion"><img class="lazyloadt4s lz_op_ef" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="//cdn.shopify.com/s/files/1/0550/5853/0481/files/002-megaphone_ea78c3d7-a18b-4be8-8f43-87e1c7487d6f_x40.png?v=1662035193" alt=""></i><span class="kalles_toolbar_label">最新優惠</span></a>
+      </div><div class="type_toolbar_account kalles_toolbar_item">
+        <a href="/account" class="push_side" data-id="#nt_login_canvas">
+          <span class="toolbar_icon"></span><span class="kalles_toolbar_label">註冊／登入</span></a>
+      </div><div class="type_toolbar_link type_toolbar_59cb9452-c359-405c-98a1-cea9690ea7ef kalles_toolbar_item">
+        <a href="/pages/pet-dollars-petsthing-reward-system"><img class="lazyloadt4s lz_op_ef" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="//cdn.shopify.com/s/files/1/0550/5853/0481/files/petsthing-reward_x40.png?v=1662258208" alt=""></i><span class="kalles_toolbar_label">儲分回贈</span></a>
+      </div></div></div><div id="snow_ef_t4" class="dn"></div><div id="gliconsymbols" class="hide dn"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><symbol id="scl_remove"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"> <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line> </svg> </symbol> <symbol id="scl_edit"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"> <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path> </svg> </symbol> <symbol id="scl_selected"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 20l-7-7 3-3 4 4L19 4l3 3z"/></svg></symbol></svg></div><!-- "snippets/smile-initializer.liquid" was not rendered, the associated app was uninstalled -->
+<div id="shopify-block-7555218208816688692" class="shopify-block shopify-app-block"></div></body>
+</html>
